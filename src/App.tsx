@@ -3,6 +3,7 @@ import { FinanceProvider } from './context/FinanceContext';
 import { Navbar, NavTab } from './components/layout/Navbar';
 import { OverviewView } from './components/overview/OverviewView';
 import { Compass, ShieldCheck } from 'lucide-react';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Lazy-loaded secondary views for code splitting and optimal bundle pacing
 const DecisionLab = lazy(() =>
@@ -100,9 +101,11 @@ const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <FinanceProvider>
-      <AppContent />
-    </FinanceProvider>
+    <ErrorBoundary>
+      <FinanceProvider>
+        <AppContent />
+      </FinanceProvider>
+    </ErrorBoundary>
   );
 };
 

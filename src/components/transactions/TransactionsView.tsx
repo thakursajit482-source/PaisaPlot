@@ -186,6 +186,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
             </div>
             <input
               type="text"
+              aria-label="Search transactions by title or category"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title or category..."

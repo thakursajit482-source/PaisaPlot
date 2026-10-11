@@ -109,6 +109,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="sub-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md animate-fade-in"
     >
       <div className="relative w-full max-w-md glass-panel-elevated rounded-2xl shadow-[0_24px_60px_0_rgba(0,0,0,0.65)] p-6 overflow-hidden">

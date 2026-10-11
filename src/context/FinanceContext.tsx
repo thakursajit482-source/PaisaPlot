@@ -19,6 +19,11 @@ import {
   saveFinancialState,
   resetFinancialState as resetStorage,
 } from '../finance/storage';
+import {
+  sanitizeString,
+  sanitizeAmount,
+  sanitizeDate,
+} from '../utils/sanitization';
 
 interface FinanceContextType {
   state: FinancialState;
@@ -128,16 +133,18 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       notes?: string,
       date?: string
     ): { success: boolean; error?: string } => {
-      const sanitizedTitle = title.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const sanitizedTitle = sanitizeString(title, 100);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!sanitizedTitle) {
         return { success: false, error: 'Please enter a purchase title.' };
       }
 
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Purchase amount must be greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
+
+      const sanitizedAmount = amountValidation.amount;
 
       // Check current solvency using shared calculations
       const current = calculateFinancialMetrics(state);
@@ -157,16 +164,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         };
       }
 
-      const txDate = date && !isNaN(new Date(date).getTime()) ? new Date(date).toISOString() : new Date().toISOString();
+      const txDate = sanitizeDate(date);
+      const sanitizedNotes = notes ? sanitizeString(notes, 300) : undefined;
 
       const newTransaction: Transaction = {
         id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: sanitizedTitle,
-        category: category || 'Other',
+        category: sanitizeString(category, 50) || 'Other',
         amount: sanitizedAmount,
         date: txDate,
         type: 'expense',
-        notes: notes?.trim() || undefined,
+        notes: sanitizedNotes,
       };
 
       setState((prev) => ({
@@ -197,7 +205,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         date
       );
       if (result.success) {
-        setNotification(`Recorded unexpected expense of ₹${Number(amount).toLocaleString('en-IN')} for "${title.trim()}". Runway recalibrated.`);
+        setNotification(`Recorded unexpected expense of ₹${Number(amount).toLocaleString('en-IN')} for "${sanitizeString(title, 100)}". Runway recalibrated.`);
       }
       return result;
     },
@@ -213,9 +221,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       date?: string,
       notes?: string
     ): { success: boolean; error?: string } => {
-      const sanitizedTitle = title.trim();
-      const sanitizedCategory = category.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const sanitizedTitle = sanitizeString(title, 100);
+      const sanitizedCategory = sanitizeString(category, 50);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!sanitizedTitle) {
         return { success: false, error: 'Please enter an income source/title.' };
@@ -225,16 +233,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return { success: false, error: 'Please select or enter a valid category.' };
       }
 
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Income amount must be a positive number greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
 
-      const targetDate = date ? new Date(date) : new Date();
-      if (isNaN(targetDate.getTime())) {
-        return { success: false, error: 'Please provide a valid date.' };
-      }
-
-      const isoDate = targetDate.toISOString();
+      const sanitizedAmount = amountValidation.amount;
+      const isoDate = sanitizeDate(date);
+      const sanitizedNotes = notes ? sanitizeString(notes, 300) : undefined;
 
       const newTransaction: Transaction = {
         id: `tx-inc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -243,7 +248,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         amount: sanitizedAmount,
         date: isoDate,
         type: 'income',
-        notes: notes?.trim() || undefined,
+        notes: sanitizedNotes,
       };
 
       setState((prev) => ({
@@ -260,25 +265,28 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // ---------------- GOALS OPERATIONS ----------------
   const addGoal = useCallback(
     (name: string, targetAmount: number, targetDate?: string): { success: boolean; error?: string } => {
-      const trimmed = name.trim();
-      const amount = Math.round(Number(targetAmount) * 100) / 100;
+      const trimmed = sanitizeString(name, 80);
+      const amountValidation = sanitizeAmount(targetAmount);
 
       if (!trimmed) {
         return { success: false, error: 'Goal name cannot be empty.' };
       }
-      if (isNaN(amount) || !isFinite(amount) || amount <= 0) {
-        return { success: false, error: 'Target amount must be a positive number greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
       if (targetDate && isNaN(new Date(targetDate).getTime())) {
         return { success: false, error: 'Please specify a valid target date.' };
       }
+
+      const amount = amountValidation.amount;
+      const targetDateFormatted = targetDate ? sanitizeDate(targetDate) : undefined;
 
       const newGoal: SavingsGoal = {
         id: `goal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name: trimmed,
         targetAmount: amount,
         alreadySaved: 0,
-        targetDate: targetDate || undefined,
+        targetDate: targetDateFormatted,
         createdAt: new Date().toISOString(),
       };
 
@@ -300,16 +308,17 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const editGoal = useCallback(
     (id: string, name: string, targetAmount: number, targetDate?: string): { success: boolean; error?: string } => {
-      const trimmed = name.trim();
-      const amount = Math.round(Number(targetAmount) * 100) / 100;
+      const trimmed = sanitizeString(name, 80);
+      const amountValidation = sanitizeAmount(targetAmount);
 
       if (!trimmed) {
         return { success: false, error: 'Goal name cannot be empty.' };
       }
-      if (isNaN(amount) || !isFinite(amount) || amount <= 0) {
-        return { success: false, error: 'Target amount must be a positive number greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
 
+      const amount = amountValidation.amount;
       const targetGoal = state.goals.find((g) => g.id === id);
       if (!targetGoal) {
         return { success: false, error: 'Goal not found.' };
@@ -321,10 +330,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         };
       }
 
+      const targetDateFormatted = targetDate ? sanitizeDate(targetDate) : undefined;
+
       setState((prev) => {
         const nextGoals = prev.goals.map((g) =>
           g.id === id
-            ? { ...g, name: trimmed, targetAmount: amount, targetDate: targetDate || undefined }
+            ? { ...g, name: trimmed, targetAmount: amount, targetDate: targetDateFormatted }
             : g
         );
         const nextGoalTarget = nextGoals.reduce((sum, g) => sum + g.targetAmount, 0);
@@ -368,11 +379,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const contributeToGoal = useCallback(
     (goalId: string, amount: number): { success: boolean; error?: string } => {
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Contribution amount must be greater than ₹0.' };
+      const amountValidation = sanitizeAmount(amount);
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
 
+      const sanitizedAmount = amountValidation.amount;
       const goal = state.goals.find((g) => g.id === goalId);
       if (!goal) {
         return { success: false, error: 'Goal not found.' };
@@ -416,26 +428,29 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // ---------------- BILLS OPERATIONS ----------------
   const addBill = useCallback(
     (title: string, amount: number, dueDate: string, category?: string): { success: boolean; error?: string } => {
-      const trimmed = title.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const trimmed = sanitizeString(title, 100);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!trimmed) {
         return { success: false, error: 'Bill title cannot be empty.' };
       }
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Bill amount must be greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
       if (!dueDate || isNaN(new Date(dueDate).getTime())) {
         return { success: false, error: 'Please provide a valid due date.' };
       }
 
+      const sanitizedAmount = amountValidation.amount;
+      const dueDateSanitized = sanitizeDate(dueDate).split('T')[0];
+
       const newBill: BillCommitment = {
         id: `bill-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         title: trimmed,
         amount: sanitizedAmount,
-        dueDate,
+        dueDate: dueDateSanitized,
         isPaid: false,
-        category: category || 'Bills & Utilities',
+        category: sanitizeString(category, 50) || 'Bills & Utilities',
       };
 
       setState((prev) => {
@@ -456,22 +471,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const editBill = useCallback(
     (id: string, title: string, amount: number, dueDate: string, category?: string): { success: boolean; error?: string } => {
-      const trimmed = title.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const trimmed = sanitizeString(title, 100);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!trimmed) {
         return { success: false, error: 'Bill title cannot be empty.' };
       }
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Bill amount must be greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
       if (!dueDate || isNaN(new Date(dueDate).getTime())) {
         return { success: false, error: 'Please provide a valid due date.' };
       }
 
+      const sanitizedAmount = amountValidation.amount;
+      const dueDateSanitized = sanitizeDate(dueDate).split('T')[0];
+
       setState((prev) => {
         const nextBills = prev.bills.map((b) =>
-          b.id === id ? { ...b, title: trimmed, amount: sanitizedAmount, dueDate, category: category || b.category } : b
+          b.id === id ? { ...b, title: trimmed, amount: sanitizedAmount, dueDate: dueDateSanitized, category: sanitizeString(category, 50) || b.category } : b
         );
         const nextUnpaid = nextBills.filter((b) => !b.isPaid).reduce((sum, b) => sum + b.amount, 0);
         return {
@@ -589,28 +607,32 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       category: string,
       notes?: string
     ): { success: boolean; error?: string } => {
-      const trimmed = name.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const trimmed = sanitizeString(name, 80);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!trimmed) {
         return { success: false, error: 'Subscription name cannot be empty.' };
       }
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Subscription amount must be greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
       if (!nextBillingDate || isNaN(new Date(nextBillingDate).getTime())) {
         return { success: false, error: 'Please provide a valid next billing date.' };
       }
+
+      const sanitizedAmount = amountValidation.amount;
+      const billingDateSanitized = sanitizeDate(nextBillingDate).split('T')[0];
+      const sanitizedNotes = notes ? sanitizeString(notes, 300) : undefined;
 
       const newSub: Subscription = {
         id: `sub-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name: trimmed,
         amount: sanitizedAmount,
         frequency,
-        nextBillingDate,
+        nextBillingDate: billingDateSanitized,
         active: true,
-        category: category || 'Entertainment',
-        notes: notes?.trim() || undefined,
+        category: sanitizeString(category, 50) || 'Entertainment',
+        notes: sanitizedNotes,
       };
 
       setState((prev) => ({
@@ -634,18 +656,22 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       category: string,
       notes?: string
     ): { success: boolean; error?: string } => {
-      const trimmed = name.trim();
-      const sanitizedAmount = Math.round(Number(amount) * 100) / 100;
+      const trimmed = sanitizeString(name, 80);
+      const amountValidation = sanitizeAmount(amount);
 
       if (!trimmed) {
         return { success: false, error: 'Subscription name cannot be empty.' };
       }
-      if (isNaN(sanitizedAmount) || !isFinite(sanitizedAmount) || sanitizedAmount <= 0) {
-        return { success: false, error: 'Subscription amount must be greater than ₹0.' };
+      if (!amountValidation.isValid) {
+        return { success: false, error: amountValidation.error };
       }
       if (!nextBillingDate || isNaN(new Date(nextBillingDate).getTime())) {
         return { success: false, error: 'Please provide a valid next billing date.' };
       }
+
+      const sanitizedAmount = amountValidation.amount;
+      const billingDateSanitized = sanitizeDate(nextBillingDate).split('T')[0];
+      const sanitizedNotes = notes ? sanitizeString(notes, 300) : undefined;
 
       setState((prev) => ({
         ...prev,
@@ -656,9 +682,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 name: trimmed,
                 amount: sanitizedAmount,
                 frequency,
-                nextBillingDate,
-                category: category || s.category,
-                notes: notes?.trim() || undefined,
+                nextBillingDate: billingDateSanitized,
+                category: sanitizeString(category, 50) || s.category,
+                notes: sanitizedNotes,
               }
             : s
         ),

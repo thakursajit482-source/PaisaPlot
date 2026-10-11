@@ -72,7 +72,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             </div>
 
             {/* Desktop Navigation Tabs */}
-            <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.08] backdrop-blur-sm">
+            <nav
+              role="tablist"
+              aria-label="Application navigation views"
+              className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.08] backdrop-blur-sm"
+            >
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -80,6 +84,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                   <button
                     key={item.id}
                     type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-label={`${item.label} view`}
                     onClick={() => handleNavClick(item.id)}
                     className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-lime flex items-center gap-2 cursor-pointer ${
                       isActive
@@ -132,7 +139,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 type="button"
                 onClick={() => setIsResetModalOpen(true)}
                 title="Reset to initial ₹10,000 / 30-day demo state"
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer"
+                aria-label="Reset demo sandbox"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-lime"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Reset Demo</span>
@@ -143,7 +151,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-label="Toggle navigation menu"
-                className="md:hidden p-2 text-slate-400 hover:text-slate-200 bg-navy-900 rounded-xl border border-navy-800"
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-nav-menu"
+                className="md:hidden p-2 text-slate-400 hover:text-slate-200 bg-navy-900 rounded-xl border border-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-lime"
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -153,7 +163,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-navy-900 border-b border-navy-800 px-4 pt-2 pb-4 space-y-1 animate-fade-in">
+          <div
+            id="mobile-nav-menu"
+            role="region"
+            aria-label="Mobile navigation menu"
+            className="md:hidden bg-navy-900 border-b border-navy-800 px-4 pt-2 pb-4 space-y-1 animate-fade-in"
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -162,7 +177,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                   key={item.id}
                   type="button"
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-between cursor-pointer ${
+                  aria-label={`${item.label} view`}
+                  className={`w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-lime ${
                     isActive
                       ? item.highlight
                         ? 'bg-brand-lime text-navy-950 font-bold'
@@ -187,14 +203,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
         {/* Toast / Notification Bar */}
         {notification && (
-          <div className="bg-brand-lime/10 border-b border-brand-lime/30 px-4 py-2 text-xs text-brand-lime flex items-center justify-between">
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-brand-lime/10 border-b border-brand-lime/30 px-4 py-2 text-xs text-brand-lime flex items-center justify-between"
+          >
             <div className="flex items-center gap-2 max-w-5xl mx-auto w-full">
               <Check className="w-4 h-4 shrink-0 text-brand-lime" />
               <span>{notification}</span>
             </div>
             <button
               onClick={clearNotification}
-              className="text-brand-lime/70 hover:text-brand-lime p-1"
+              className="text-brand-lime/70 hover:text-brand-lime p-1 rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-lime"
               aria-label="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />

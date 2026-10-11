@@ -32,14 +32,22 @@ export function calculateBalance(
   let totalExpenses = 0;
 
   for (const tx of transactions) {
+    const rawAmt = typeof tx.amount === 'number' && !isNaN(tx.amount) && isFinite(tx.amount)
+      ? Math.max(0, tx.amount)
+      : 0;
+
     if (tx.type === 'income') {
-      totalIncome += tx.amount;
+      totalIncome += rawAmt;
     } else if (tx.type === 'expense') {
-      totalExpenses += tx.amount;
+      totalExpenses += rawAmt;
     }
   }
 
-  const balance = startingBudget + totalIncome - totalExpenses;
+  const safeBudget = typeof startingBudget === 'number' && !isNaN(startingBudget) && isFinite(startingBudget)
+    ? startingBudget
+    : 10000;
+
+  const balance = safeBudget + totalIncome - totalExpenses;
   return {
     balance: Math.round(balance * 100) / 100,
     totalIncome: Math.round(totalIncome * 100) / 100,
@@ -377,12 +385,12 @@ export function calculateFinancialMetrics(state: FinancialState): FinancialMetri
   // If modern bills array is present, compute unpaid commitments from unpaid bills
   const unpaidCommitments = Array.isArray(state.bills) && state.bills.length > 0
     ? calculateTotalUnpaidBills(state.bills)
-    : state.unpaidCommitments;
+    : (state.unpaidCommitments ?? 0);
 
   // If modern goals array is present, compute goals totals
   const { savingsGoal, alreadySaved } = Array.isArray(state.goals) && state.goals.length > 0
     ? calculateGoalsTotals(state.goals)
-    : { savingsGoal: state.savingsGoal, alreadySaved: state.alreadySaved };
+    : { savingsGoal: state.savingsGoal ?? 0, alreadySaved: state.alreadySaved ?? 0 };
 
   const spendableAfterCommitments = calculateSpendableAfterCommitments(
     balance,
@@ -1128,8 +1136,10 @@ export function filterTransactions(
 
       // 3. Search query matching title or category
       if (normalizedQuery) {
-        const matchesTitle = tx.title.toLowerCase().includes(normalizedQuery);
-        const matchesCategory = tx.category.toLowerCase().includes(normalizedQuery);
+        const titleText = (tx.title || '').toLowerCase();
+        const categoryText = (tx.category || '').toLowerCase();
+        const matchesTitle = titleText.includes(normalizedQuery);
+        const matchesCategory = categoryText.includes(normalizedQuery);
         if (!matchesTitle && !matchesCategory) {
           return false;
         }

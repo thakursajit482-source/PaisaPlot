@@ -84,6 +84,9 @@ export const HealthScoreModal: React.FC<HealthScoreModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="health-score-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
     >
       <div className="relative w-full max-w-2xl max-h-[90vh] glass-panel-elevated rounded-2xl shadow-[0_24px_60px_0_rgba(0,0,0,0.65)] flex flex-col overflow-hidden">

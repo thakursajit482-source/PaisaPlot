@@ -161,8 +161,8 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ forecast, isScenar
       </div>
 
       {/* Recharts Container */}
-      <div className="h-72 sm:h-80 w-full pt-2">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-72 sm:h-80 min-h-[280px] w-full pt-2">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
           <AreaChart
             data={data}
             margin={{ top: 12, right: 16, left: 0, bottom: 4 }}

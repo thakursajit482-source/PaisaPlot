@@ -42,7 +42,8 @@ export const DecisionLab: React.FC = () => {
 
   const amountNumber = useMemo(() => {
     const parsed = parseFloat(amountStr);
-    return isNaN(parsed) ? 0 : Math.max(0, parsed);
+    if (isNaN(parsed) || !isFinite(parsed)) return 0;
+    return Math.min(10000000, Math.max(0, Math.round(parsed * 100) / 100));
   }, [amountStr]);
 
   // Current simulation input
@@ -321,6 +322,7 @@ export const DecisionLab: React.FC = () => {
                     id="purchase-amount"
                     type="number"
                     min="1"
+                    max="10000000"
                     step="any"
                     value={amountStr}
                     onChange={(e) => {
