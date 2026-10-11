@@ -5,26 +5,32 @@ import {
   Calendar,
   Target,
   ArrowRight,
-  TrendingUp,
   Sparkles,
   PieChart,
-  Clock,
-  CheckCircle,
   PlusCircle,
   Receipt,
   ArrowUpRight,
   ArrowDownRight,
-  AlertTriangle,
   Tag,
   Zap,
   Repeat,
   CalendarDays,
+  Compass,
+  Activity,
+  ChevronRight,
 } from 'lucide-react';
 import { useFinance } from '../../context/FinanceContext';
-import { formatINR, generateForecast, calculateGoalsTotals, calculateHealthScoreBreakdown } from '../../finance/calculations';
+import {
+  formatINR,
+  generateForecast,
+  calculateHealthScoreBreakdown,
+  calculateFinancialRunway,
+  getDeterministicFinancialInsights,
+} from '../../finance/calculations';
 import { AddIncomeModal } from '../common/AddIncomeModal';
 import { UnexpectedExpenseModal } from '../common/UnexpectedExpenseModal';
 import { HealthScoreModal } from './HealthScoreModal';
+import { GoalModal } from '../goals/GoalModal';
 
 interface OverviewViewProps {
   onNavigateToDecisionLab: () => void;
@@ -43,11 +49,18 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const [isAddIncomeOpen, setIsAddIncomeOpen] = useState(false);
   const [isUnexpectedExpenseOpen, setIsUnexpectedExpenseOpen] = useState(false);
   const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
 
   const forecast = useMemo(() => generateForecast(state), [state]);
-  const goalsTotals = useMemo(() => calculateGoalsTotals(state.goals), [state.goals]);
   const unpaidBillsCount = state.bills.filter((b) => !b.isPaid).length;
   const activeSubsCount = state.subscriptions.filter((s) => s.active).length;
+
+  // Pure deterministic runway & insights
+  const runway = useMemo(() => calculateFinancialRunway(state, metrics, forecast), [state, metrics, forecast]);
+  const insights = useMemo(
+    () => getDeterministicFinancialInsights(state, metrics, forecast),
+    [state, metrics, forecast]
+  );
 
   // Capital allocation percentages
   const starting = state.startingBudget > 0 ? state.startingBudget : 10000;
@@ -56,19 +69,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const discretionaryPercent = Math.max(0, 100 - commitmentPercent - savingsPercent);
 
   // Latest 5 recorded transactions, newest first
-  const recentTransactions = state.transactions
-    .slice()
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+  const recentTransactions = useMemo(() => {
+    return state.transactions
+      .slice()
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+  }, [state.transactions]);
 
-  const getRiskBadgeColor = (risk: string) => {
-    switch (risk) {
-      case 'safe':
+  const netFlow = metrics.totalIncome - metrics.totalExpenses;
+
+  const getRunwayBadgeColor = (status: string) => {
+    switch (status) {
+      case 'solvent':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
       case 'caution':
         return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-      case 'high_risk':
-        return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
       case 'critical':
         return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
       default:
@@ -76,30 +91,38 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     }
   };
 
+  const handleInsightAction = (actionTab?: string) => {
+    if (actionTab === 'decision-lab') onNavigateToDecisionLab();
+    else if (actionTab === 'transactions') onNavigateToTransactions();
+    else if (actionTab === 'goals' && onNavigateToGoals) onNavigateToGoals();
+    else if (actionTab === 'forecast' && onNavigateToForecast) onNavigateToForecast();
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Top Banner with Quick Actions */}
+      {/* 1. Command Center Header & Quick Actions Bar */}
       <div className="relative overflow-hidden bg-gradient-to-r from-navy-900 via-navy-850 to-navy-900 border border-navy-750 rounded-2xl p-6 md:p-8 shadow-card-dark">
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-lime/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-lime/10 text-brand-lime border border-brand-lime/20">
-              <Sparkles className="w-3.5 h-3.5" />
-              30-Day Budget Management Sandbox
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-lime/10 text-brand-lime border border-brand-lime/25">
+              <span className="w-2 h-2 rounded-full bg-brand-lime animate-pulse" />
+              <span>Financial Command Center • 30-Day Sandbox</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
-              Manage {formatINR(state.startingBudget)} with Mathematical Certainty
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight font-sans">
+              Control <span className="text-brand-lime">{formatINR(state.startingBudget)}</span> with Mathematical Certainty
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Every prospective expense affects your essential bills and daily runway. Test simulated purchases before spending, or record newly earned income to bolster your buffer.
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+              Every prospective expense affects upcoming commitments and daily survival runway. Test simulated purchases before spending real money.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          {/* 4 Prioritized Action CTAs */}
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setIsAddIncomeOpen(true)}
-              className="px-3.5 py-3 rounded-xl font-bold text-xs bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              className="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 transition-all flex items-center gap-2 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] motion-reduce:transform-none"
             >
               <PlusCircle className="w-4 h-4 text-emerald-400" />
               <span>Record Income</span>
@@ -108,239 +131,333 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <button
               type="button"
               onClick={() => setIsUnexpectedExpenseOpen(true)}
-              className="px-3.5 py-3 rounded-xl font-bold text-xs bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+              className="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 transition-all flex items-center gap-2 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] motion-reduce:transform-none"
             >
               <Zap className="w-4 h-4 text-rose-400" />
-              <span>Unexpected Expense</span>
+              <span>Unexpected Outflow</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAddGoalOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl font-bold text-xs bg-brand-violet/15 hover:bg-brand-violet/25 text-brand-violet-light border border-brand-violet/40 transition-all flex items-center gap-2 cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] motion-reduce:transform-none"
+            >
+              <Target className="w-4 h-4 text-brand-violet-light" />
+              <span>Add Goal</span>
             </button>
 
             <button
               type="button"
               onClick={onNavigateToDecisionLab}
-              className="px-4 py-3 rounded-xl font-bold text-xs bg-brand-lime hover:bg-brand-lime-dim text-navy-950 transition-all shadow-glow-lime flex items-center gap-2 cursor-pointer group"
+              className="px-4 py-2.5 rounded-xl font-bold text-xs bg-brand-lime hover:bg-brand-lime-dim text-navy-950 transition-all shadow-glow-lime flex items-center gap-2 cursor-pointer group hover:scale-[1.02] active:scale-[0.98] motion-reduce:transform-none"
             >
-              <span>Simulate What-If Purchase</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <Sparkles className="w-4 h-4" />
+              <span>Simulate Purchase</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform motion-reduce:transform-none" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Primary Key Metrics (Prominent 2-Card Hero) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Hero Card 1: Current Balance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden group hover:border-navy-700 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-navy-850 text-brand-lime border border-navy-750">
-                <Wallet className="w-5 h-5" />
+      {/* 2. Distinctive Financial Hero Section (Balance Anchor + Allowance Gauge) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left Hero Anchor (7 Cols): Current Balance & 30-Day Runway Bar */}
+        <div className="lg:col-span-7 bg-navy-900 border border-navy-800 rounded-2xl p-6 sm:p-7 shadow-card-dark relative overflow-hidden flex flex-col justify-between group hover:border-navy-700 transition-all">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-navy-950 text-brand-lime border border-navy-800 shadow-sm">
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                    Current Total Balance
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-mono">
+                    Starting Budget: {formatINR(state.startingBudget)}
+                  </span>
+                </div>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Current Total Balance
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-navy-950 border border-navy-800 text-slate-300 font-semibold">
+                  {state.daysRemaining} Days Left
+                </span>
+              </div>
+            </div>
+
+            {/* Giant Balance Typography */}
+            <div className="pt-1">
+              <div className="text-4xl sm:text-5xl font-black text-slate-100 font-mono tracking-tight">
+                {formatINR(metrics.balance)}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                <span
+                  className={`inline-flex items-center gap-1 font-mono font-bold px-2 py-0.5 rounded-md ${
+                    netFlow >= 0
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  {netFlow >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                  {formatINR(netFlow, { includeSign: true })} Net Flow
+                </span>
+                <span className="text-slate-400">
+                  Total Income: <strong className="text-emerald-400">{formatINR(metrics.totalIncome)}</strong>
+                </span>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-400">
+                  Total Expenses: <strong className="text-rose-400">{formatINR(metrics.totalExpenses)}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Integrated 30-Day Financial Runway Indicator */}
+          <div className="mt-6 pt-5 border-t border-navy-800/80 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-brand-lime" />
+                <span className="font-bold text-slate-200 uppercase tracking-wider">
+                  30-Day Cash Survival Runway
+                </span>
+              </div>
+              <span className={`text-[11px] font-semibold font-mono px-2.5 py-0.5 rounded-full border ${getRunwayBadgeColor(runway.status)}`}>
+                {runway.statusLabel}
               </span>
             </div>
-            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-navy-950 border border-navy-800 text-slate-400">
-              {state.daysRemaining} days remaining
-            </span>
-          </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-slate-100 font-mono tracking-tight">
-            {formatINR(metrics.balance)}
-          </div>
-          <div className="mt-3 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-navy-800/80">
-            <span>Starting Budget: <strong className="text-slate-200">{formatINR(state.startingBudget)}</strong></span>
-            <span className="text-emerald-400 font-medium">
-              Net Flow: {formatINR(metrics.totalIncome - metrics.totalExpenses, { includeSign: true })}
-            </span>
+
+            {/* Progress Bar of Runway Days */}
+            <div className="space-y-1.5">
+              <div className="w-full bg-navy-950 h-2.5 rounded-full overflow-hidden border border-navy-800 flex">
+                <div
+                  style={{ width: `${runway.runwayPercent}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    runway.status === 'solvent'
+                      ? 'bg-gradient-to-r from-emerald-500 to-brand-lime'
+                      : runway.status === 'caution'
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-300'
+                      : 'bg-gradient-to-r from-rose-600 to-rose-400'
+                  }`}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[11px] text-slate-400 font-mono">
+                <span>Day 0 (Start)</span>
+                <span className="text-slate-300 font-semibold">
+                  Trough: {formatINR(runway.troughBalance)} on Day {runway.daysUntilTrough}
+                </span>
+                <span>Day {state.daysRemaining} (Goal)</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              {runway.description}
+            </p>
           </div>
         </div>
 
-        {/* Hero Card 2: Daily Allowance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden group hover:border-navy-700 transition-all">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-navy-850 text-brand-lime border border-navy-750">
-                <Calendar className="w-5 h-5" />
+        {/* Right Hero Block (5 Cols): Dynamic Daily Discretionary Allowance Speedometer */}
+        <div className="lg:col-span-5 bg-navy-900 border border-navy-800 rounded-2xl p-6 sm:p-7 shadow-card-dark relative overflow-hidden flex flex-col justify-between group hover:border-navy-700 transition-all">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-navy-950 text-brand-lime border border-navy-800 shadow-sm">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                    Daily Discretionary Allowance
+                  </span>
+                  <span className="text-[11px] text-slate-500">Paced for {state.daysRemaining} days</span>
+                </div>
               </div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Daily Discretionary Allowance
+
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-lime/10 text-brand-lime border border-brand-lime/30 font-mono">
+                Paced Burn
               </span>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-lime/10 text-brand-lime border border-brand-lime/30">
-              Paced Pace
-            </span>
+
+            <div>
+              <div className="text-4xl sm:text-5xl font-black text-brand-lime font-mono tracking-tight">
+                {formatINR(metrics.dailyAllowance, { decimals: 2 })}
+                <span className="text-base text-slate-400 font-normal font-sans ml-1.5">/ day</span>
+              </div>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                Spendable cash remaining after strictly safeguarding ₹{state.unpaidCommitments.toLocaleString('en-IN')} in unpaid bills and your ₹{metrics.remainingSavingsTarget.toLocaleString('en-IN')} savings goal.
+              </p>
+            </div>
           </div>
-          <div className="text-3xl sm:text-4xl font-extrabold text-brand-lime font-mono tracking-tight">
-            {formatINR(metrics.dailyAllowance, { decimals: 2 })}
-            <span className="text-sm text-slate-400 font-normal font-sans ml-1.5">/ day</span>
-          </div>
-          <div className="mt-3 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-navy-800/80">
-            <span>Spendable after bills & target: <strong className="text-slate-200">{formatINR(metrics.discretionaryRemaining)}</strong></span>
-            <span className="text-brand-lime font-medium">Guards ₹3k bills</span>
+
+          <div className="mt-6 pt-5 border-t border-navy-800/80 space-y-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">Total Discretionary Remaining:</span>
+              <span className="font-mono font-bold text-slate-100 text-sm">
+                {formatINR(metrics.discretionaryRemaining)}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onNavigateToDecisionLab}
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Simulate Spend vs Today's Allowance</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Secondary Metrics Grid (6 Responsive Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Metric 3: Total Recorded Income */}
-        <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-navy-750 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Total Recorded Income
-            </span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <ArrowUpRight className="w-4 h-4" />
-            </div>
+      {/* 3. Meaningful Capital Structure Breakdown (Liquidity Ribbon) */}
+      <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-navy-800">
+          <div className="flex items-center gap-2">
+            <PieChart className="w-4 h-4 text-brand-lime" />
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
+              Capital Structure & Liquidity Allocation
+            </h2>
           </div>
-          <div className="text-2xl font-extrabold text-emerald-400 font-mono">
-            {formatINR(metrics.totalIncome, { includeSign: true })}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span>Extra inflows recorded</span>
-            <span className="text-emerald-500 font-medium">
-              {state.transactions.filter((t) => t.type === 'income').length} entries
-            </span>
-          </div>
+          <span className="text-xs text-slate-400 font-mono">
+            Starting Base: {formatINR(state.startingBudget)}
+          </span>
         </div>
 
-        {/* Metric 4: Total Recorded Expenses */}
-        <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-navy-750 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Total Recorded Expenses
-            </span>
-            <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <ArrowDownRight className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-rose-400 font-mono">
-            {metrics.totalExpenses > 0 ? `−${formatINR(metrics.totalExpenses)}` : '₹0'}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span>Executed from Decision Lab</span>
-            <span className="text-rose-400 font-medium">
-              {state.transactions.filter((t) => t.type === 'expense').length} entries
-            </span>
-          </div>
-        </div>
-
-        {/* Metric 5: Unpaid Commitments */}
-        <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-navy-750 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Unpaid Commitments
-            </span>
-            <div className="p-1.5 rounded-lg bg-navy-850 text-slate-300 border border-navy-750">
-              <Shield className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-slate-100 font-mono">
-            {formatINR(state.unpaidCommitments)}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span>Rent & essential bills</span>
-            <span className="text-emerald-400 font-medium">Protected floor</span>
-          </div>
-        </div>
-
-        {/* Metric 6: Spendable Cash after Commitments */}
-        <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-navy-750 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Spendable Cash
-            </span>
-            <div className="p-1.5 rounded-lg bg-navy-850 text-emerald-400 border border-navy-750">
-              <Shield className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-extrabold text-emerald-400 font-mono">
-            {formatINR(metrics.spendableAfterCommitments)}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span>Balance − Commitments</span>
-            <span className="text-emerald-400 font-medium">Solvency intact</span>
-          </div>
-        </div>
-
-        {/* Metric 7: Savings Goal Progress */}
-        <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-navy-750 transition-all">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Savings Goal Progress
-            </span>
-            <div className="p-1.5 rounded-lg bg-navy-850 text-brand-violet-light border border-navy-750">
-              <Target className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <div className="text-2xl font-extrabold text-slate-100 font-mono">
-              {formatINR(goalsTotals.totalTarget > 0 ? goalsTotals.totalTarget : state.savingsGoal)}
-            </div>
-            <span className="text-xs font-semibold font-mono text-brand-violet-light">
-              {metrics.savingsProgressPercent}%
-            </span>
-          </div>
-          <div className="w-full bg-navy-950 h-2 rounded-full mt-2.5 overflow-hidden border border-navy-800">
+        {/* Visual Partition Ribbon */}
+        <div className="space-y-3">
+          <div className="h-5 w-full bg-navy-950 rounded-full overflow-hidden flex p-0.5 border border-navy-800 shadow-inner">
             <div
-              style={{ width: `${metrics.savingsProgressPercent}%` }}
-              className="h-full bg-brand-violet rounded-full transition-all"
+              style={{ width: `${commitmentPercent}%` }}
+              className="h-full bg-rose-500 rounded-l-full transition-all duration-500"
+              title={`Unpaid Commitments: ${commitmentPercent}%`}
+            />
+            <div
+              style={{ width: `${savingsPercent}%` }}
+              className="h-full bg-brand-violet transition-all duration-500"
+              title={`Savings Target: ${savingsPercent}%`}
+            />
+            <div
+              style={{ width: `${discretionaryPercent}%` }}
+              className="h-full bg-brand-lime rounded-r-full transition-all duration-500"
+              title={`Discretionary Spendable: ${discretionaryPercent}%`}
             />
           </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center justify-between">
-            <span>Status</span>
-            <span className={metrics.savingsFeasible ? 'text-emerald-400 font-medium' : 'text-amber-400 font-medium'}>
-              {metrics.savingsFeasible ? 'Achievable' : 'Strained'}
-            </span>
-          </div>
-        </div>
 
-        {/* Metric 8: Financial Health Score & Risk Level */}
-        <div
-          onClick={() => setIsHealthModalOpen(true)}
-          className="bg-navy-900/90 border border-navy-800 rounded-2xl p-5 shadow-card-dark hover:border-brand-lime/50 transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              setIsHealthModalOpen(true);
-            }
-          }}
-          aria-label="View Financial Health Score 4-Pillar Breakdown"
-        >
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider group-hover:text-brand-lime transition-colors">
-              Health Score & Risk
-            </span>
-            <div className="p-1.5 rounded-lg bg-navy-850 text-emerald-400 border border-navy-750 group-hover:bg-brand-lime/10 group-hover:text-brand-lime transition-colors">
-              <TrendingUp className="w-4 h-4" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* Pillar 1: Commitments */}
+            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-rose-400 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                  Unpaid Commitments
+                </span>
+                <span className="font-mono text-slate-400 text-[11px] font-bold">{commitmentPercent}%</span>
+              </div>
+              <div className="text-lg font-bold font-mono text-slate-100">
+                {formatINR(state.unpaidCommitments)}
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Essential bills ring-fenced from discretionary spending.
+              </p>
             </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <div className="text-2xl font-extrabold text-slate-100 font-mono">
-              {metrics.healthScore}
-              <span className="text-xs text-slate-500 font-normal font-sans ml-1">/ 100</span>
+
+            {/* Pillar 2: Savings Cushion */}
+            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-brand-violet-light font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-brand-violet shrink-0" />
+                  Savings Envelopes
+                </span>
+                <span className="font-mono text-slate-400 text-[11px] font-bold">{savingsPercent}%</span>
+              </div>
+              <div className="text-lg font-bold font-mono text-slate-100">
+                {formatINR(metrics.remainingSavingsTarget)}
+              </div>
+              <p className="text-[10px] text-slate-400">
+                Allocated goal cushion ({metrics.savingsProgressPercent}% funded so far).
+              </p>
             </div>
-            <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${getRiskBadgeColor(
-                metrics.riskLevel
-              )}`}
-            >
-              {metrics.riskLevel.toUpperCase()}
-            </span>
-          </div>
-          <div className="mt-3 text-xs text-slate-500 flex items-center justify-between">
-            <span className="text-brand-lime text-[11px] font-medium group-hover:underline flex items-center gap-0.5">
-              View 4-Pillar Breakdown →
-            </span>
-            <span className="text-slate-300 font-medium truncate max-w-[130px]" title={metrics.riskLabel}>
-              {metrics.riskLabel}
-            </span>
+
+            {/* Pillar 3: Discretionary Spendable */}
+            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-brand-lime font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-brand-lime shrink-0" />
+                  Discretionary Spendable
+                </span>
+                <span className="font-mono text-slate-400 text-[11px] font-bold">{discretionaryPercent}%</span>
+              </div>
+              <div className="text-lg font-bold font-mono text-brand-lime">
+                {formatINR(metrics.spendableAfterCommitments)}
+              </div>
+              <p className="text-[10px] text-slate-400">
+                True unencumbered cash ready for safe daily use.
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Interconnected Planning Hub: Upcoming Commitments & Multi-Goal Envelopes */}
+      {/* 4. Concise Financial Insight Panel (Deterministic Calculations) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-brand-lime" />
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
+              Deterministic Financial Intelligence
+            </h2>
+          </div>
+          <span className="text-xs text-slate-500">100% Calculated • Zero Fabrication</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {insights.map((insight) => (
+            <div
+              key={insight.id}
+              className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                insight.type === 'success'
+                  ? 'bg-emerald-950/25 border-emerald-500/30 text-emerald-300'
+                  : insight.type === 'warning'
+                  ? 'bg-amber-950/25 border-amber-500/30 text-amber-300'
+                  : insight.type === 'critical'
+                  ? 'bg-rose-950/25 border-rose-500/30 text-rose-300'
+                  : 'bg-navy-900 border-navy-800 text-slate-300'
+              }`}
+            >
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                    {insight.title}
+                  </h3>
+                  {insight.metricLabel && (
+                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-navy-950/80 border border-navy-750 text-slate-200">
+                      {insight.metricLabel}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {insight.description}
+                </p>
+              </div>
+
+              {insight.actionText && (
+                <div className="pt-3 mt-3 border-t border-navy-800/60">
+                  <button
+                    type="button"
+                    onClick={() => handleInsightAction(insight.actionTab)}
+                    className="text-xs font-bold text-brand-lime hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{insight.actionText}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Interconnected Planning Hub: Obligations & Envelopes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: Upcoming Obligations & 30-Day Forecast Safety */}
         <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4 flex flex-col justify-between">
@@ -353,7 +470,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 </h3>
               </div>
               <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
                   forecast.lowestProjectedBalance > 0
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                     : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
@@ -464,7 +581,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     <div className="w-full bg-navy-900 h-1.5 rounded-full overflow-hidden border border-navy-800">
                       <div
                         style={{ width: `${pct}%` }}
-                        className="h-full bg-brand-violet rounded-full transition-all"
+                        className="h-full bg-brand-violet rounded-full transition-all duration-500"
                       />
                     </div>
                   </div>
@@ -488,165 +605,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
       </div>
 
-      {/* Capital Allocation & Financial Guardrails Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Capital Structure Breakdown (7 cols) */}
-        <div className="lg:col-span-7 bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <PieChart className="w-4 h-4 text-brand-lime" />
-              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                Capital Allocation Model
-              </h3>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">
-              Starting: {formatINR(state.startingBudget)}
-            </span>
-          </div>
-
-          <p className="text-xs text-slate-300 leading-relaxed">
-            PaisaPilot guarantees your capital is partitioned mathematically so essential payments are never compromised:
-          </p>
-
-          {/* Allocation Bar */}
-          <div className="space-y-2">
-            <div className="h-4 w-full bg-navy-950 rounded-full overflow-hidden flex p-0.5 border border-navy-800">
-              <div
-                style={{ width: `${commitmentPercent}%` }}
-                className="h-full bg-rose-500 rounded-l-full transition-all"
-                title={`Unpaid Commitments: ${commitmentPercent}%`}
-              />
-              <div
-                style={{ width: `${savingsPercent}%` }}
-                className="h-full bg-brand-violet transition-all"
-                title={`Savings Target: ${savingsPercent}%`}
-              />
-              <div
-                style={{ width: `${discretionaryPercent}%` }}
-                className="h-full bg-brand-lime rounded-r-full transition-all"
-                title={`Discretionary Allowance: ${discretionaryPercent}%`}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2 text-xs">
-              <div className="bg-navy-950/70 p-2.5 rounded-xl border border-navy-800">
-                <div className="flex items-center gap-1.5 text-rose-400 font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span>Commitments</span>
-                </div>
-                <div className="font-mono font-bold text-slate-200">
-                  {formatINR(state.unpaidCommitments)}
-                </div>
-                <div className="text-[10px] text-slate-500">{commitmentPercent}% locked bills</div>
-              </div>
-
-              <div className="bg-navy-950/70 p-2.5 rounded-xl border border-navy-800">
-                <div className="flex items-center gap-1.5 text-brand-violet-light font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-brand-violet" />
-                  <span>Savings Target</span>
-                </div>
-                <div className="font-mono font-bold text-slate-200">
-                  {formatINR(metrics.remainingSavingsTarget)}
-                </div>
-                <div className="text-[10px] text-slate-500">{savingsPercent}% cushion</div>
-              </div>
-
-              <div className="bg-navy-950/70 p-2.5 rounded-xl border border-navy-800">
-                <div className="flex items-center gap-1.5 text-brand-lime font-medium mb-1">
-                  <span className="w-2 h-2 rounded-full bg-brand-lime" />
-                  <span>Discretionary</span>
-                </div>
-                <div className="font-mono font-bold text-slate-200">
-                  {formatINR(metrics.discretionaryRemaining)}
-                </div>
-                <div className="text-[10px] text-slate-500">{discretionaryPercent}% free spend</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Solvency & Safety Checks (5 cols) */}
-        <div className="lg:col-span-5 bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-                  Solvency Audit
-                </h3>
-              </div>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                100% Verified
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              Real-time mathematical guardrails enforce bill solvency and protect savings from impulsive expenditures.
-            </p>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between py-2 border-b border-navy-800/80">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  Commitment Buffer
-                </span>
-                <span className="text-slate-200 font-mono font-semibold">
-                  {metrics.spendableAfterCommitments >= 0 ? 'Protected' : 'Impaired'} ({formatINR(metrics.spendableAfterCommitments)})
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-navy-800/80">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  {metrics.savingsFeasible ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                  )}
-                  Savings Viability
-                </span>
-                <span className="text-slate-200 font-mono font-semibold">
-                  {metrics.savingsFeasible ? 'Achievable' : `Deficit: ${formatINR(metrics.savingsShortfall)}`}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-brand-lime" />
-                  Paced Daily Burn
-                </span>
-                <span className="text-brand-lime font-mono font-semibold">
-                  {formatINR(metrics.dailyAllowance, { decimals: 2 })}/day
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsAddIncomeOpen(true)}
-              className="flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all flex items-center justify-center gap-1.5"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              Add Income
-            </button>
-            <button
-              type="button"
-              onClick={onNavigateToDecisionLab}
-              className="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim transition-all flex items-center justify-center gap-1.5 shadow-glow-lime"
-            >
-              Simulate
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 3: Recent Transactions (Latest 5) */}
+      {/* 6. Recent Verified Activity Feed */}
       <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-navy-800">
           <div className="flex items-center gap-2">
             <Receipt className="w-4 h-4 text-brand-lime" />
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-              Recent Transactions
+              Live Activity Feed
             </h3>
             <span className="text-xs text-slate-500 font-mono ml-1">
               ({recentTransactions.length} of {state.transactions.length})
@@ -659,7 +624,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               onClick={onNavigateToTransactions}
               className="text-xs font-bold text-brand-lime hover:text-brand-lime-dim flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <span>View All Transactions</span>
+              <span>View Full Ledger</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
@@ -680,7 +645,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAddIncomeOpen(true)}
-                className="px-3.5 py-2 text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1.5"
+                className="px-3.5 py-2 text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 Record Inflow
@@ -688,7 +653,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToDecisionLab}
-                className="px-3.5 py-2 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5"
+                className="px-3.5 py-2 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 Simulate Purchase
@@ -751,19 +716,22 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         )}
       </div>
 
-      {/* Add Income Modal */}
+      {/* Modals */}
       <AddIncomeModal
         isOpen={isAddIncomeOpen}
         onClose={() => setIsAddIncomeOpen(false)}
       />
 
-      {/* Unexpected Expense Modal */}
       <UnexpectedExpenseModal
         isOpen={isUnexpectedExpenseOpen}
         onClose={() => setIsUnexpectedExpenseOpen(false)}
       />
 
-      {/* Financial Health Score 4-Pillar Breakdown Modal */}
+      <GoalModal
+        isOpen={isAddGoalOpen}
+        onClose={() => setIsAddGoalOpen(false)}
+      />
+
       <HealthScoreModal
         isOpen={isHealthModalOpen}
         onClose={() => setIsHealthModalOpen(false)}

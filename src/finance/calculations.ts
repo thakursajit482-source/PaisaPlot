@@ -16,6 +16,8 @@ import {
   HealthScoreFactor,
   HealthScoreBreakdown,
   ForecastScenarioOptions,
+  FinancialRunway,
+  FinancialInsight,
 } from '../types/finance';
 
 /**
@@ -1150,3 +1152,133 @@ export function getUniqueCategories(transactions: Transaction[]): string[] {
   }
   return Array.from(categoriesSet).sort();
 }
+
+/**
+  * Pure calculation: 30-day cash survival / runway indicator based on forecast and state.
+  */
+export function calculateFinancialRunway(
+  state: FinancialState,
+  metrics: FinancialMetrics,
+  forecast: ForecastProjection
+): FinancialRunway {
+  const daysTotal = Math.max(1, state.daysRemaining);
+  const lowestTrough = forecast.lowestProjectedBalance;
+  const lowestDay = forecast.lowestBalanceDay;
+
+  // Determine runway days: if balance dips <= 0, find first deficit day
+  let runwayDays = daysTotal;
+  if (lowestTrough <= 0) {
+    const breachDay = forecast.days.find((d) => d.baselineBalance <= 0);
+    runwayDays = breachDay ? Math.max(0, breachDay.day) : lowestDay;
+  }
+
+  const runwayPercent = Math.min(100, Math.max(0, Math.round((runwayDays / daysTotal) * 100)));
+  const dailyBurnRate = forecast.assumptions?.dailyBurnBaseline ?? metrics.dailyAllowance;
+
+  let status: 'solvent' | 'caution' | 'critical' = 'solvent';
+  let statusLabel = `${daysTotal}-Day Solvent Runway`;
+
+  if (lowestTrough <= 0) {
+    status = 'critical';
+    statusLabel = `Deficit Risk on Day ${runwayDays}`;
+  } else if (metrics.spendableAfterCommitments < 1000 || lowestTrough < 1000) {
+    status = 'caution';
+    statusLabel = 'Tight Cash Runway';
+  }
+
+  const description =
+    status === 'critical'
+      ? `Projected balance drops to ₹${lowestTrough.toLocaleString('en-IN')} on Day ${lowestDay}. Defer non-essential expenses.`
+      : status === 'caution'
+      ? `Cash remains positive with a ₹${lowestTrough.toLocaleString('en-IN')} trough. Discretionary spending should be carefully paced.`
+      : `Full ${daysTotal}-day horizon is solvent. ₹${state.unpaidCommitments.toLocaleString('en-IN')} in unpaid bills are fully protected.`;
+
+  return {
+    runwayDays,
+    status,
+    statusLabel,
+    dailyBurnRate,
+    daysUntilTrough: lowestDay,
+    troughBalance: lowestTrough,
+    runwayPercent,
+    description,
+  };
+}
+
+/**
+ * Pure calculation: Deterministic, rule-based financial insights derived strictly from state and forecast.
+ */
+export function getDeterministicFinancialInsights(
+  state: FinancialState,
+  metrics: FinancialMetrics,
+  _forecast: ForecastProjection
+): FinancialInsight[] {
+  const insights: FinancialInsight[] = [];
+
+  // Insight 1: Solvency & Commitments
+  if (state.unpaidCommitments > 0) {
+    if (metrics.spendableAfterCommitments >= 0) {
+      insights.push({
+        id: 'commitments-protected',
+        type: 'success',
+        title: 'Commitments Ring-Fenced',
+        description: `₹${state.unpaidCommitments.toLocaleString('en-IN')} is safeguarded for upcoming bills without debt risk.`,
+        metricLabel: `₹${metrics.spendableAfterCommitments.toLocaleString('en-IN')} spendable cash`,
+        actionText: 'Review Bills',
+        actionTab: 'forecast',
+      });
+    } else {
+      insights.push({
+        id: 'commitments-breached',
+        type: 'critical',
+        title: 'Commitments Exceed Balance',
+        description: `Unpaid bills exceed current cash balance by ₹${Math.abs(metrics.spendableAfterCommitments).toLocaleString('en-IN')}. Record income or reduce goals.`,
+        metricLabel: `Deficit: ₹${Math.abs(metrics.spendableAfterCommitments).toLocaleString('en-IN')}`,
+        actionText: 'Record Inflow',
+        actionTab: 'transactions',
+      });
+    }
+  }
+
+  // Insight 2: Daily Allowance Pacing
+  if (metrics.dailyAllowance > 0) {
+    insights.push({
+      id: 'daily-pacing',
+      type: metrics.dailyAllowance >= 150 ? 'info' : 'warning',
+      title: 'Discretionary Burn Pace',
+      description: `Spending up to ₹${metrics.dailyAllowance.toFixed(0)}/day preserves your full 30-day runway and savings cushion.`,
+      metricLabel: `₹${metrics.dailyAllowance.toFixed(2)}/day`,
+      actionText: 'Simulate Spend',
+      actionTab: 'decision-lab',
+    });
+  }
+
+  // Insight 3: Savings Goals Envelope
+  const remainingSavings = metrics.remainingSavingsTarget;
+  if (remainingSavings > 0) {
+    if (metrics.savingsFeasible) {
+      insights.push({
+        id: 'savings-on-track',
+        type: 'success',
+        title: 'Savings Target Viable',
+        description: `Current funds allow completing ₹${remainingSavings.toLocaleString('en-IN')} in savings without impairing daily essentials.`,
+        metricLabel: `${metrics.savingsProgressPercent}% saved`,
+        actionText: 'Fund Envelope',
+        actionTab: 'goals',
+      });
+    } else {
+      insights.push({
+        id: 'savings-strained',
+        type: 'warning',
+        title: 'Savings Goal Under Pressure',
+        description: `₹${metrics.savingsShortfall.toLocaleString('en-IN')} shortfall to achieve your targets. Avoid unvetted discretionary purchases.`,
+        metricLabel: `Shortfall: ₹${metrics.savingsShortfall.toLocaleString('en-IN')}`,
+        actionText: 'Optimize Goals',
+        actionTab: 'goals',
+      });
+    }
+  }
+
+  return insights;
+}
+

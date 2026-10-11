@@ -169,16 +169,16 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ forecast, isScenar
           >
             <defs>
               <linearGradient id="baselineGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#a3e635" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#a3e635" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#ccff00" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="#ccff00" stopOpacity={0.0} />
               </linearGradient>
               <linearGradient id="simulatedGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#c084fc" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#c084fc" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#a78bfa" stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#172030" vertical={false} />
 
             <XAxis
               dataKey="day"
@@ -236,11 +236,11 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ forecast, isScenar
               type="monotone"
               dataKey="baselineBalance"
               name="Baseline Balance"
-              stroke="#a3e635"
+              stroke="#ccff00"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#baselineGradient)"
-              activeDot={{ r: 5, fill: '#a3e635', stroke: '#0f172a', strokeWidth: 2 }}
+              activeDot={{ r: 5, fill: '#ccff00', stroke: '#07090e', strokeWidth: 2 }}
             />
 
             {/* Simulated Line if Scenario Active */}
@@ -249,11 +249,11 @@ export const ForecastChart: React.FC<ForecastChartProps> = ({ forecast, isScenar
                 type="monotone"
                 dataKey="simulatedBalance"
                 name="Simulated Balance"
-                stroke="#c084fc"
+                stroke="#a78bfa"
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
-                activeDot={{ r: 5, fill: '#c084fc', stroke: '#0f172a', strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: '#a78bfa', stroke: '#07090e', strokeWidth: 2 }}
               />
             )}
           </AreaChart>

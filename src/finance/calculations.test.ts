@@ -20,6 +20,8 @@ import {
   calculate30DaySubscriptionCost,
   generateForecast,
   isSubscriptionPaidForDate,
+  calculateFinancialRunway,
+  getDeterministicFinancialInsights,
 } from './calculations';
 import {
   FinancialState,
@@ -1338,6 +1340,96 @@ describe('Phase 3 — Interconnected Financial Planning Engine', () => {
       expect(simImpairs.affordabilityStatus).toBe('impairs_commitments');
     });
   });
+
+  describe('calculateFinancialRunway', () => {
+    it('computes 30-day solvent runway when lowest projected balance is positive', () => {
+      const state: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 3000,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [],
+        subscriptions: [],
+      };
+      const metrics = calculateFinancialMetrics(state);
+      const forecast = generateForecast(state);
+      const runway = calculateFinancialRunway(state, metrics, forecast);
+
+      expect(runway.runwayDays).toBe(30);
+      expect(runway.runwayPercent).toBe(100);
+      expect(runway.status).toBe('solvent');
+      expect(runway.statusLabel).toContain('30-Day Solvent Runway');
+      expect(runway.troughBalance).toBeGreaterThan(0);
+    });
+
+    it('identifies critical deficit status when forecast drops to deficit', () => {
+      const state: FinancialState = {
+        startingBudget: 2000,
+        daysRemaining: 30,
+        unpaidCommitments: 2500,
+        savingsGoal: 1000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [{ id: 'b1', title: 'Heavy Bill', amount: 2500, dueDate: '2026-10-15', isPaid: false }],
+        subscriptions: [],
+      };
+      const metrics = calculateFinancialMetrics(state);
+      const forecast = generateForecast(state);
+      const runway = calculateFinancialRunway(state, metrics, forecast);
+
+      expect(runway.status).toBe('critical');
+      expect(runway.statusLabel).toContain('Deficit Risk');
+      expect(runway.description).toContain('Defer non-essential expenses');
+    });
+  });
+
+  describe('getDeterministicFinancialInsights', () => {
+    it('generates deterministic rule-based insights for solvent state with commitments and goals', () => {
+      const state: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 3000,
+        savingsGoal: 2000,
+        alreadySaved: 500,
+        transactions: [],
+        goals: [],
+        bills: [{ id: 'b1', title: 'Rent', amount: 3000, dueDate: '2026-10-25', isPaid: false }],
+        subscriptions: [],
+      };
+      const metrics = calculateFinancialMetrics(state);
+      const forecast = generateForecast(state);
+      const insights = getDeterministicFinancialInsights(state, metrics, forecast);
+
+      expect(insights.length).toBeGreaterThanOrEqual(2);
+      expect(insights.some((i) => i.id === 'commitments-protected')).toBe(true);
+      expect(insights.some((i) => i.id === 'daily-pacing')).toBe(true);
+      expect(insights.some((i) => i.id === 'savings-on-track')).toBe(true);
+    });
+
+    it('generates warning insights when commitments exceed balance', () => {
+      const state: FinancialState = {
+        startingBudget: 1500,
+        daysRemaining: 30,
+        unpaidCommitments: 3000,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [{ id: 'b1', title: 'Rent', amount: 3000, dueDate: '2026-10-25', isPaid: false }],
+        subscriptions: [],
+      };
+      const metrics = calculateFinancialMetrics(state);
+      const forecast = generateForecast(state);
+      const insights = getDeterministicFinancialInsights(state, metrics, forecast);
+
+      expect(insights.some((i) => i.id === 'commitments-breached')).toBe(true);
+    });
+  });
 });
+
 
 

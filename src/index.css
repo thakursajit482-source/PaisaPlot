@@ -56,3 +56,44 @@
   border-color: rgba(204, 255, 0, 0.35);
   box-shadow: 0 0 20px -3px rgba(204, 255, 0, 0.15);
 }
+
+/* Custom fintech slider styling */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ccff00;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.6);
+  border: 2px solid #07090e;
+  transition: transform 0.1s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #ccff00;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.6);
+  border: 2px solid #07090e;
+}
+
+/* Universal respect for prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

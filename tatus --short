@@ -1,0 +1,12 @@
+warning: in the working copy of 'src/components/decision/DecisionLab.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/forecast/ForecastChart.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layout/Navbar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/overview/OverviewView.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/finance/calculations.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/finance/calculations.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/index.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/types/finance.ts', LF will be replaced by CRLF the next time Git touches it
+src/finance/calculations.test.ts:1433: new blank line at EOF.
+src/finance/calculations.ts:1284: new blank line at EOF.
+src/index.css:99: new blank line at EOF.
+src/types/finance.ts:265: new blank line at EOF.

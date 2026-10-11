@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                     key={item.id}
                     type="button"
                     onClick={() => handleNavClick(item.id)}
-                    className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-lime flex items-center gap-2 cursor-pointer ${
                       isActive
                         ? item.highlight
                           ? 'bg-brand-lime text-navy-950 shadow-glow-lime font-bold'

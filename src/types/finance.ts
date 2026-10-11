@@ -241,3 +241,25 @@ export interface ForecastProjection {
   };
   scenario?: ForecastScenarioOptions;
 }
+
+export interface FinancialRunway {
+  runwayDays: number; // 0 to daysRemaining (e.g. 30)
+  status: 'solvent' | 'caution' | 'critical';
+  statusLabel: string;
+  dailyBurnRate: number; // current pace per day
+  daysUntilTrough: number;
+  troughBalance: number;
+  runwayPercent: number; // 0 - 100%
+  description: string;
+}
+
+export interface FinancialInsight {
+  id: string;
+  type: 'success' | 'warning' | 'info' | 'critical';
+  title: string;
+  description: string;
+  metricLabel?: string;
+  actionText?: string;
+  actionTab?: 'decision-lab' | 'transactions' | 'goals' | 'forecast';
+}
+

@@ -10,14 +10,16 @@ import {
   AlertTriangle,
   Info,
   RotateCcw,
-  Tag,
   IndianRupee,
   Activity,
   Layers,
+  Sliders,
+  Plus,
 } from 'lucide-react';
 import { useFinance } from '../../context/FinanceContext';
 import { EXPENSE_CATEGORIES, ExpenseCategory, PurchaseSimulationInput, SimulationResult } from '../../types/finance';
 import { ConfirmationModal } from './ConfirmationModal';
+import { formatINR } from '../../finance/calculations';
 
 const PRESET_SCENARIOS = [
   { title: 'Dinner & Movies', category: 'Food & Dining', amount: 650, note: 'Safe casual outing' },
@@ -39,7 +41,7 @@ export const DecisionLab: React.FC = () => {
 
   const amountNumber = useMemo(() => {
     const parsed = parseFloat(amountStr);
-    return isNaN(parsed) ? 0 : parsed;
+    return isNaN(parsed) ? 0 : Math.max(0, parsed);
   }, [amountStr]);
 
   // Current simulation input
@@ -56,6 +58,10 @@ export const DecisionLab: React.FC = () => {
     return previewPurchase(simulationInput);
   }, [previewPurchase, simulationInput]);
 
+  const maxSliderLimit = useMemo(() => {
+    return Math.max(10000, metrics.balance);
+  }, [metrics.balance]);
+
   const handlePresetClick = (preset: typeof PRESET_SCENARIOS[0]) => {
     setTitle(preset.title);
     setCategory(preset.category as ExpenseCategory);
@@ -71,7 +77,22 @@ export const DecisionLab: React.FC = () => {
     setFormError(null);
   };
 
-  const handleInitiateConfirmation = () => {
+  const handleQuickAdd = (increment: number) => {
+    const current = amountNumber;
+    const next = current + increment;
+    setAmountStr(next.toString());
+    if (formError) setFormError(null);
+  };
+
+  const handleSpendablePercent = (percent: number) => {
+    const target = Math.max(0, Math.round(metrics.spendableAfterCommitments * percent));
+    setAmountStr(target > 0 ? target.toString() : '');
+    if (formError) setFormError(null);
+  };
+
+  const handleInitiateConfirmation = (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (!title.trim()) {
       setFormError('Please provide a title or item description.');
       return;
@@ -82,9 +103,11 @@ export const DecisionLab: React.FC = () => {
     }
     if (!simulation.isAffordable) {
       if (simulation.affordabilityStatus === 'exceeds_balance') {
-        setFormError(`Cannot afford: purchase exceeds current total balance of ₹${metrics.balance.toLocaleString('en-IN')}.`);
+        setFormError(`Cannot afford: purchase exceeds current total balance of ${formatINR(metrics.balance)}.`);
       } else if (simulation.affordabilityStatus === 'impairs_commitments') {
-        setFormError(`Cannot afford: purchase breaches your locked ₹${state.unpaidCommitments.toLocaleString('en-IN')} essential commitments.`);
+        setFormError(
+          `Cannot afford: purchase breaches your locked ${formatINR(state.unpaidCommitments)} essential commitments.`
+        );
       }
       return;
     }
@@ -132,103 +155,95 @@ export const DecisionLab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Page Header */}
+      {/* 1. Page Header with Visual Sandbox Badge */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-navy-800">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="p-1 rounded-md bg-brand-lime/10 text-brand-lime">
               <Sparkles className="w-4 h-4" />
             </span>
-            <span className="text-xs font-semibold tracking-wider uppercase text-brand-lime">
-              Zero-Risk Decision Simulator
+            <span className="text-xs font-semibold tracking-wider uppercase text-brand-lime font-mono">
+              Deterministic Decision Simulator
+            </span>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-brand-violet/20 text-brand-violet-light border border-brand-violet/30">
+              Zero-Risk Sandbox
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight font-sans">
             What-If Decision Lab
           </h1>
-          <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-            Preview any prospective purchase in real time. Simulate balance changes, commitment safety, daily runway depletion, and savings goal feasibility before spending real money.
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+            Preview any prospective purchase before committing real funds. Inspect balance deductions, unpaid bill protection, daily allowance depletion, and savings goal feasibility in real time.
           </p>
         </div>
 
-        {/* Quick baseline reminder pill */}
-        <div className="flex items-center gap-3 bg-navy-900 border border-navy-800 rounded-xl px-4 py-2.5 self-start md:self-auto">
+        {/* Quick Baseline Anchor Pill */}
+        <div className="flex items-center gap-3 bg-navy-900 border border-navy-800 rounded-xl px-4 py-2.5 self-start md:self-auto shadow-sm">
           <div className="text-right">
-            <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Current Balance</span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Available Balance</span>
             <span className="text-base font-extrabold text-slate-100 font-mono">
-              ₹{metrics.balance.toLocaleString('en-IN')}
+              {formatINR(metrics.balance)}
             </span>
           </div>
           <div className="h-7 w-px bg-navy-800" />
           <div className="text-right">
             <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Daily Allowance</span>
             <span className="text-base font-extrabold text-brand-lime font-mono">
-              ₹{metrics.dailyAllowance.toFixed(0)}/day
+              {formatINR(metrics.dailyAllowance, { decimals: 0 })}/day
             </span>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: Form on Left, Simulation on Right */}
+      {/* 2. Main Two-Column Scenario Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Input Form (5 cols) */}
+        {/* Left Column: Input Form, Interactive Range Slider & Presets (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-navy-900/90 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden">
+          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-brand-lime" />
+                <Sliders className="w-4 h-4 text-brand-lime" />
                 <h2 className="text-base font-bold text-slate-200">
-                  Simulate A Purchase
+                  Scenario Parameters
                 </h2>
               </div>
-              {hasSimulatedAmount && (
-                <button
-                  type="button"
-                  onClick={handleClearForm}
-                  className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  Clear
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleClearForm}
+                className="text-xs text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
             </div>
 
-            {/* Quick Presets */}
-            <div className="mb-6">
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+            {/* Quick Test Presets Carousel / Badges */}
+            <div className="mb-5 space-y-2">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Quick Test Scenarios
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {PRESET_SCENARIOS.map((preset) => (
                   <button
                     key={preset.title}
                     type="button"
                     onClick={() => handlePresetClick(preset)}
-                    className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all text-left flex items-center gap-1.5 ${
-                      title === preset.title && amountNumber === preset.amount
-                        ? 'bg-brand-lime/15 border-brand-lime/50 text-brand-lime font-medium shadow-sm'
-                        : 'bg-navy-850 hover:bg-navy-800 border-navy-750 text-slate-300 hover:text-slate-100'
-                    }`}
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-navy-950 hover:bg-navy-800 text-slate-300 border border-navy-750 hover:border-brand-lime/40 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>{preset.title}</span>
-                    <span className="font-mono text-slate-400 font-medium">₹{preset.amount}</span>
+                    <span className="font-mono text-brand-lime text-[11px] font-bold">
+                      {formatINR(preset.amount)}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Form Fields */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleInitiateConfirmation();
-              }}
-              className="space-y-4"
-            >
-              {/* Purchase Title */}
+            <form onSubmit={handleInitiateConfirmation} className="space-y-4">
+              {/* Item Description */}
               <div>
-                <label htmlFor="purchase-title" className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Purchase Title <span className="text-rose-400">*</span>
+                <label htmlFor="purchase-title" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Item or Purchase Description <span className="text-rose-400">*</span>
                 </label>
                 <input
                   id="purchase-title"
@@ -238,7 +253,7 @@ export const DecisionLab: React.FC = () => {
                     setTitle(e.target.value);
                     if (formError) setFormError(null);
                   }}
-                  placeholder="e.g. Mechanical Keyboard, Weekend Trip"
+                  placeholder="e.g. Ergonomic Keyboard, Dinner Buffet, Smart Watch"
                   className="w-full px-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                   required
                 />
@@ -246,8 +261,8 @@ export const DecisionLab: React.FC = () => {
 
               {/* Category */}
               <div>
-                <label htmlFor="purchase-category" className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Category
+                <label htmlFor="purchase-category" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Expense Category
                 </label>
                 <select
                   id="purchase-category"
@@ -263,11 +278,40 @@ export const DecisionLab: React.FC = () => {
                 </select>
               </div>
 
-              {/* Amount */}
-              <div>
-                <label htmlFor="purchase-amount" className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Amount in Rupees (₹) <span className="text-rose-400">*</span>
-                </label>
+              {/* Dual-Mode Amount Input & Interactive Slider */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="purchase-amount" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Hypothetical Amount (₹) <span className="text-rose-400">*</span>
+                  </label>
+                  {/* Quick percentage buttons based on available spendable cash */}
+                  {metrics.spendableAfterCommitments > 0 && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleSpendablePercent(0.25)}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-slate-400 hover:text-slate-200 border border-navy-800 cursor-pointer"
+                      >
+                        25%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSpendablePercent(0.5)}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-slate-400 hover:text-slate-200 border border-navy-800 cursor-pointer"
+                      >
+                        50%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSpendablePercent(1)}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-brand-lime border border-navy-800 font-semibold cursor-pointer"
+                      >
+                        Max Spendable
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <IndianRupee className="w-4 h-4" />
@@ -283,23 +327,70 @@ export const DecisionLab: React.FC = () => {
                       if (formError) setFormError(null);
                     }}
                     placeholder="e.g. 1500"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-base text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                     required
                   />
                 </div>
+
+                {/* Interactive Tactile Range Slider */}
+                <div className="pt-2 space-y-1.5">
+                  <input
+                    type="range"
+                    min="0"
+                    max={maxSliderLimit}
+                    step="50"
+                    value={amountNumber}
+                    onChange={(e) => {
+                      setAmountStr(e.target.value);
+                      if (formError) setFormError(null);
+                    }}
+                    aria-label="Hypothetical purchase amount slider"
+                    className="w-full h-2 bg-navy-950 rounded-lg appearance-none cursor-pointer accent-brand-lime"
+                  />
+                  <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                    <span>₹0</span>
+                    <span>Spendable: {formatINR(metrics.spendableAfterCommitments)}</span>
+                    <span>Max: {formatINR(maxSliderLimit)}</span>
+                  </div>
+                </div>
+
+                {/* Stepper helper buttons */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickAdd(250)}
+                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3 text-brand-lime" /> ₹250
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickAdd(500)}
+                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3 text-brand-lime" /> ₹500
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickAdd(1000)}
+                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3 text-brand-lime" /> ₹1,000
+                  </button>
+                </div>
               </div>
 
-              {/* Optional Notes */}
+              {/* Optional Simulation Notes */}
               <div>
-                <label htmlFor="purchase-notes" className="block text-xs font-medium text-slate-300 mb-1.5">
-                  Simulation Notes <span className="text-slate-500">(Optional)</span>
+                <label htmlFor="purchase-notes" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                  Simulation Notes <span className="text-slate-500 font-normal lowercase">(optional)</span>
                 </label>
                 <input
                   id="purchase-notes"
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Bought for workstation productivity"
+                  placeholder="e.g. Workstation upgrade, Birthday dinner"
                   className="w-full px-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                 />
               </div>
@@ -312,46 +403,50 @@ export const DecisionLab: React.FC = () => {
                 </div>
               )}
 
-              {/* Form Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              {/* Form Confirmation Trigger */}
+              <div className="pt-2">
                 <button
                   type="submit"
                   disabled={amountNumber <= 0 || !title.trim() || !simulation.isAffordable}
                   className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-sm ${
                     amountNumber > 0 && title.trim() && simulation.isAffordable
                       ? 'bg-brand-lime hover:bg-brand-lime-dim text-navy-950 shadow-glow-lime cursor-pointer'
-                      : 'bg-navy-800 text-slate-500 border border-navy-750 cursor-not-allowed'
+                      : 'bg-navy-800 text-slate-500 border border-navy-750 cursor-not-allowed opacity-60'
                   }`}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Proceed to Confirmation
+                  <span>Proceed to Confirmation</span>
                 </button>
               </div>
             </form>
           </div>
 
-          {/* Quick Context Card */}
-          <div className="bg-navy-900/40 border border-navy-800/80 rounded-2xl p-5 text-xs text-slate-400 space-y-2">
+          {/* Transparent Mathematical Sandbox Explanation Card */}
+          <div className="bg-navy-900/60 border border-navy-800 rounded-2xl p-5 text-xs text-slate-400 space-y-2.5">
             <div className="flex items-center gap-2 text-slate-300 font-semibold">
-              <Info className="w-4 h-4 text-brand-violet-light" />
-              <span>Simulated Guardrails</span>
+              <Info className="w-4 h-4 text-brand-lime" />
+              <span>Transparent Decision Mathematics</span>
             </div>
-            <p className="leading-relaxed">
-              PaisaPilot guarantees your <strong className="text-slate-200">₹{state.unpaidCommitments.toLocaleString('en-IN')} unpaid commitments</strong> (rent, bills) are never double-counted or overlooked. If an expense cuts into commitments or your <strong className="text-slate-200">₹{state.savingsGoal.toLocaleString('en-IN')} savings target</strong>, the Decision Lab warns you immediately.
+            <p className="leading-relaxed text-[11px]">
+              Simulations in PaisaPilot are 100% deterministic and client-side. Adjusting values never deducts money or alters your recorded balance until you explicitly verify confirmation.
             </p>
+            <div className="pt-1 text-[11px] text-slate-400 border-t border-navy-800/80 flex items-center justify-between">
+              <span>Locked Unpaid Bills:</span>
+              <strong className="text-slate-200 font-mono">{formatINR(state.unpaidCommitments)}</strong>
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Live What-If Comparison Grid (7 cols) */}
+        {/* Right Column: Live What-If Comparison Matrix & Risk Explainability (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Explanation Banner */}
+          {/* Risk Explainability & Impact Banner */}
           <div
-            className={`border rounded-2xl p-5 transition-all ${getSeverityAlertStyle(
+            className={`border rounded-2xl p-5 sm:p-6 transition-all ${getSeverityAlertStyle(
               simulation.impactAnalysis.severity
             )}`}
           >
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-navy-950/40 shrink-0 mt-0.5">
+            <div className="flex items-start gap-3.5">
+              <div className="p-2.5 rounded-xl bg-navy-950/60 shrink-0 mt-0.5 border border-navy-800">
                 {simulation.impactAnalysis.severity === 'neutral' ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 ) : simulation.impactAnalysis.severity === 'warning' ? (
@@ -360,9 +455,9 @@ export const DecisionLab: React.FC = () => {
                   <AlertOctagon className="w-5 h-5 text-rose-400" />
                 )}
               </div>
-              <div className="space-y-1.5 flex-1">
+              <div className="space-y-2 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-bold text-sm text-slate-100">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-100">
                     {hasSimulatedAmount ? simulation.impactAnalysis.headline : 'Ready to Simulate'}
                   </h3>
                   {hasSimulatedAmount && (
@@ -378,17 +473,18 @@ export const DecisionLab: React.FC = () => {
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {hasSimulatedAmount
                     ? simulation.impactAnalysis.description
-                    : 'Enter an amount or select one of the test presets on the left to inspect before-and-after financial impact.'}
+                    : 'Enter an amount or adjust the slider on the left to inspect real-time before-and-after financial consequences.'}
                 </p>
+
                 {hasSimulatedAmount && (
-                  <div className="pt-2 text-[11px] text-slate-400 space-y-1 border-t border-navy-800/40">
-                    <div>
-                      <strong className="text-slate-300">Daily Runway:</strong>{' '}
-                      {simulation.impactAnalysis.runwayImpactText}
+                  <div className="pt-2 text-xs text-slate-300 space-y-1.5 border-t border-navy-800/40">
+                    <div className="flex items-center gap-1.5">
+                      <strong className="text-slate-200">Runway Impact:</strong>
+                      <span>{simulation.impactAnalysis.runwayImpactText}</span>
                     </div>
-                    <div>
-                      <strong className="text-slate-300">Savings Target:</strong>{' '}
-                      {simulation.impactAnalysis.goalImpactText}
+                    <div className="flex items-center gap-1.5">
+                      <strong className="text-slate-200">Savings Cushion:</strong>
+                      <span>{simulation.impactAnalysis.goalImpactText}</span>
                     </div>
                   </div>
                 )}
@@ -396,26 +492,22 @@ export const DecisionLab: React.FC = () => {
             </div>
           </div>
 
-          {/* Before & After Metrics Comparison Grid */}
+          {/* High-Impact Before & After Metrics Comparison Grid */}
           <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-2 border-b border-navy-800">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-brand-lime" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-                  Before vs After Comparison
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
+                  Before vs After Comparison Matrix
                 </h3>
               </div>
-              <span className="text-xs text-slate-400">
-                {hasSimulatedAmount ? (
-                  <span className="font-mono text-brand-lime">Live Preview Active</span>
-                ) : (
-                  'Baseline State'
-                )}
+              <span className="text-xs font-mono text-brand-lime">
+                {hasSimulatedAmount ? 'Live Preview Active' : 'Baseline State'}
               </span>
             </div>
 
             <div className="space-y-3">
-              {/* Row 1: Current Balance */}
+              {/* Row 1: Total Bank Balance */}
               <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
@@ -424,22 +516,22 @@ export const DecisionLab: React.FC = () => {
                   </span>
                   {hasSimulatedAmount && (
                     <span className="text-xs font-mono font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
-                      −₹{amountNumber.toLocaleString('en-IN')}
+                      −{formatINR(amountNumber)}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-slate-500 block uppercase">Current</span>
-                    <span className="text-lg font-bold text-slate-200 font-mono">
-                      ₹{metrics.balance.toLocaleString('en-IN')}
+                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-base sm:text-lg font-bold text-slate-200 font-mono">
+                      {formatINR(metrics.balance)}
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
                     <span
-                      className={`text-lg font-bold font-mono ${
+                      className={`text-base sm:text-lg font-bold font-mono ${
                         hasSimulatedAmount
                           ? simulation.simulatedMetrics.balance >= 0
                             ? 'text-slate-100'
@@ -447,18 +539,18 @@ export const DecisionLab: React.FC = () => {
                           : 'text-slate-400'
                       }`}
                     >
-                      ₹{simulation.simulatedMetrics.balance.toLocaleString('en-IN')}
+                      {formatINR(simulation.simulatedMetrics.balance)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Row 2: Spendable after commitments */}
+              {/* Row 2: Spendable Cash After Commitments */}
               <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-emerald-400" />
-                    Spendable After ₹{state.unpaidCommitments.toLocaleString('en-IN')} Commitments
+                    Spendable After {formatINR(state.unpaidCommitments)} Commitments
                   </span>
                   {hasSimulatedAmount && (
                     <span
@@ -469,40 +561,40 @@ export const DecisionLab: React.FC = () => {
                       }`}
                     >
                       {simulation.simulatedMetrics.spendableAfterCommitments >= 0
-                        ? `₹${simulation.simulatedMetrics.spendableAfterCommitments.toLocaleString('en-IN')} remaining`
-                        : `Deficit: ₹${Math.abs(simulation.simulatedMetrics.spendableAfterCommitments).toLocaleString('en-IN')}`}
+                        ? `${formatINR(simulation.simulatedMetrics.spendableAfterCommitments)} buffer`
+                        : `Deficit: ${formatINR(Math.abs(simulation.simulatedMetrics.spendableAfterCommitments))}`}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-slate-500 block uppercase">Current</span>
-                    <span className="text-lg font-bold text-slate-200 font-mono">
-                      ₹{metrics.spendableAfterCommitments.toLocaleString('en-IN')}
+                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-base sm:text-lg font-bold text-slate-200 font-mono">
+                      {formatINR(metrics.spendableAfterCommitments)}
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
                     <span
-                      className={`text-lg font-bold font-mono ${
+                      className={`text-base sm:text-lg font-bold font-mono ${
                         simulation.simulatedMetrics.spendableAfterCommitments < 0
                           ? 'text-rose-400'
                           : 'text-brand-lime'
                       }`}
                     >
-                      ₹{simulation.simulatedMetrics.spendableAfterCommitments.toLocaleString('en-IN')}
+                      {formatINR(simulation.simulatedMetrics.spendableAfterCommitments)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Row 3: Daily Allowance */}
+              {/* Row 3: Daily Discretionary Allowance */}
               <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <TrendingDown className="w-3.5 h-3.5 text-brand-lime" />
-                    Daily Discretionary Allowance (30 Days)
+                    Daily Discretionary Allowance ({state.daysRemaining} Days)
                   </span>
                   {hasSimulatedAmount && (
                     <span
@@ -512,23 +604,22 @@ export const DecisionLab: React.FC = () => {
                           : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                       }`}
                     >
-                      {simulation.deltas.dailyAllowance <= 0 ? '−' : '+'}₹
-                      {Math.abs(simulation.deltas.dailyAllowance).toFixed(2)}/day ({simulation.deltas.dailyAllowancePercentChange}%)
+                      {simulation.deltas.dailyAllowance <= 0 ? '−' : '+'}{formatINR(Math.abs(simulation.deltas.dailyAllowance), { decimals: 2 })}/day ({simulation.deltas.dailyAllowancePercentChange}%)
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-slate-500 block uppercase">Current</span>
-                    <span className="text-lg font-bold text-slate-200 font-mono">
-                      ₹{metrics.dailyAllowance.toFixed(2)}/d
+                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-base sm:text-lg font-bold text-slate-200 font-mono">
+                      {formatINR(metrics.dailyAllowance, { decimals: 2 })}/d
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
                     <span
-                      className={`text-lg font-bold font-mono ${
+                      className={`text-base sm:text-lg font-bold font-mono ${
                         simulation.simulatedMetrics.dailyAllowance < 50
                           ? 'text-rose-400'
                           : simulation.simulatedMetrics.dailyAllowance < 150
@@ -536,7 +627,7 @@ export const DecisionLab: React.FC = () => {
                           : 'text-brand-lime'
                       }`}
                     >
-                      ₹{simulation.simulatedMetrics.dailyAllowance.toFixed(2)}/d
+                      {formatINR(simulation.simulatedMetrics.dailyAllowance, { decimals: 2 })}/d
                     </span>
                   </div>
                 </div>
@@ -547,7 +638,7 @@ export const DecisionLab: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5 text-brand-violet-light" />
-                    ₹2,000 Savings Goal Feasibility
+                    Savings Target Cushion ({formatINR(metrics.remainingSavingsTarget)})
                   </span>
                   {hasSimulatedAmount && (
                     <span
@@ -559,20 +650,20 @@ export const DecisionLab: React.FC = () => {
                     >
                       {simulation.simulatedMetrics.savingsFeasible
                         ? '100% Achievable'
-                        : `Shortfall: ₹${simulation.simulatedMetrics.savingsShortfall.toLocaleString('en-IN')}`}
+                        : `Shortfall: ${formatINR(simulation.simulatedMetrics.savingsShortfall)}`}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-slate-500 block uppercase">Current Target</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Current Target</span>
                     <span className="text-sm font-semibold text-emerald-400">
-                      Fully Protected
+                      {metrics.savingsFeasible ? 'Protected' : 'Strained'}
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block uppercase">Simulated Status</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Simulated Status</span>
                     <span
                       className={`text-sm font-bold ${
                         simulation.simulatedMetrics.savingsFeasible
@@ -582,18 +673,18 @@ export const DecisionLab: React.FC = () => {
                     >
                       {simulation.simulatedMetrics.savingsFeasible
                         ? 'Feasible'
-                        : `Strained (−₹${simulation.simulatedMetrics.savingsShortfall.toLocaleString('en-IN')})`}
+                        : `Strained (−${formatINR(simulation.simulatedMetrics.savingsShortfall)})`}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Row 5: Risk Level & Health Score */}
+              {/* Row 5: Financial Health Score */}
               <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-brand-violet" />
-                    Health Score & Risk Assessment
+                    Financial Health Score (100-pt Scale)
                   </span>
                   {hasSimulatedAmount && (
                     <span
@@ -609,16 +700,16 @@ export const DecisionLab: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-slate-500 block uppercase">Current</span>
-                    <span className="text-sm font-bold text-slate-200">
+                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-sm font-bold text-slate-200 font-mono">
                       {metrics.healthScore}/100 ({metrics.riskLevel.toUpperCase()})
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
                     <span
-                      className={`text-sm font-bold ${
+                      className={`text-sm font-bold font-mono ${
                         simulation.simulatedMetrics.riskLevel === 'safe'
                           ? 'text-emerald-400'
                           : simulation.simulatedMetrics.riskLevel === 'caution'
@@ -626,8 +717,7 @@ export const DecisionLab: React.FC = () => {
                           : 'text-rose-400'
                       }`}
                     >
-                      {simulation.simulatedMetrics.healthScore}/100 (
-                      {simulation.simulatedMetrics.riskLevel.replace('_', ' ').toUpperCase()})
+                      {simulation.simulatedMetrics.healthScore}/100 ({simulation.simulatedMetrics.riskLevel.replace('_', ' ').toUpperCase()})
                     </span>
                   </div>
                 </div>
