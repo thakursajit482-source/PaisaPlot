@@ -17,6 +17,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { formatINR, filterTransactions, getUniqueCategories } from '../../finance/calculations';
 import { AddIncomeModal } from '../common/AddIncomeModal';
 import { UnexpectedExpenseModal } from '../common/UnexpectedExpenseModal';
+import { GlassCard } from '../common/GlassmorphismCard';
 
 interface TransactionsViewProps {
   onNavigateToDecisionLab: () => void;
@@ -101,7 +102,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Income */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Total Inflows
@@ -113,13 +114,13 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
           <span className="text-2xl font-bold text-emerald-400 font-mono">
             {formatINR(metrics.totalIncome, { includeSign: true })}
           </span>
-          <span className="text-xs text-slate-500 block mt-1">
+          <span className="text-xs text-slate-400 block mt-1">
             {state.transactions.filter((t) => t.type === 'income').length} income records
           </span>
-        </div>
+        </GlassCard>
 
         {/* Total Outflow */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Total Outflows
@@ -131,18 +132,18 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
           <span className="text-2xl font-bold text-rose-400 font-mono">
             {metrics.totalExpenses > 0 ? `−${formatINR(metrics.totalExpenses)}` : '₹0'}
           </span>
-          <span className="text-xs text-slate-500 block mt-1">
+          <span className="text-xs text-slate-400 block mt-1">
             {state.transactions.filter((t) => t.type === 'expense').length} verified purchases
           </span>
-        </div>
+        </GlassCard>
 
         {/* Net Cash Flow */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Net Flow
             </span>
-            <span className="text-xs text-slate-500 font-mono">In − Out</span>
+            <span className="text-xs text-slate-400 font-mono">In − Out</span>
           </div>
           <span
             className={`text-2xl font-bold font-mono ${
@@ -151,32 +152,32 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
           >
             {formatINR(netFlow, { includeSign: true })}
           </span>
-          <span className="text-xs text-slate-500 block mt-1">
+          <span className="text-xs text-slate-400 block mt-1">
             {netFlow >= 0 ? 'Positive or neutral drift' : 'Net expenditure outflow'}
           </span>
-        </div>
+        </GlassCard>
 
         {/* Live Remaining Balance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Remaining Balance
             </span>
-            <span className="p-1 rounded bg-navy-850 text-brand-lime text-xs font-mono">
+            <span className="p-1 rounded bg-white/[0.04] text-brand-lime text-xs font-mono">
               Live
             </span>
           </div>
           <span className="text-2xl font-bold text-brand-lime font-mono">
             {formatINR(metrics.balance)}
           </span>
-          <span className="text-xs text-slate-500 block mt-1">
+          <span className="text-xs text-slate-400 block mt-1">
             Starting: {formatINR(state.startingBudget)}
           </span>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Search and Filters Toolbar */}
-      <div className="bg-navy-900 border border-navy-800 rounded-2xl p-4 shadow-card-dark space-y-3">
+      <GlassCard variant="panel" className="p-4 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
@@ -188,7 +189,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title or category..."
-              className="w-full pl-9 pr-9 py-2 bg-navy-950 border border-navy-750 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
+              className="w-full pl-9 pr-9 py-2 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
             />
             {searchQuery && (
               <button
@@ -205,7 +206,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
           {/* Filter Controls Row */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Type Filter Pills */}
-            <div className="flex items-center p-1 bg-navy-950 border border-navy-750 rounded-xl">
+            <div className="flex items-center p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
               {(['all', 'income', 'expense'] as const).map((t) => (
                 <button
                   key={t}
@@ -213,8 +214,8 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                   onClick={() => setTypeFilter(t)}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
                     typeFilter === t
-                      ? 'bg-navy-800 text-slate-100 shadow-sm border border-navy-700 font-bold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-navy-900'
+                      ? 'bg-white/[0.1] text-slate-100 shadow-sm border border-white/[0.12] font-bold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                   }`}
                 >
                   {t === 'all' ? 'All Types' : t}
@@ -228,7 +229,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="px-3 py-2 bg-navy-950 border border-navy-750 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all cursor-pointer"
+                  className="px-3 py-2 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all cursor-pointer"
                 >
                   <option value="all">All Categories ({uniqueCategories.length})</option>
                   {uniqueCategories.map((cat) => (
@@ -297,17 +298,17 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                 </button>
               </span>
             )}
-            <span className="text-[11px] text-slate-500 ml-auto">
+            <span className="text-[11px] text-slate-400 ml-auto">
               Showing {filteredTransactions.length} of {state.transactions.length}
             </span>
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Main Ledger Content */}
       {state.transactions.length === 0 ? (
         /* Empty State (No recorded transactions) */
-        <div className="bg-navy-900/60 border border-navy-800 rounded-2xl p-12 text-center max-w-xl mx-auto space-y-4 my-8">
+        <GlassCard variant="subtle" className="p-12 text-center max-w-xl mx-auto space-y-4 my-8">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-navy-850 border border-navy-750 flex items-center justify-center text-slate-400">
             <Receipt className="w-7 h-7" />
           </div>
@@ -335,10 +336,10 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
               Simulate Purchase
             </button>
           </div>
-        </div>
+        </GlassCard>
       ) : filteredTransactions.length === 0 ? (
         /* No-Results State (Filters matched 0 items) */
-        <div className="bg-navy-900/60 border border-navy-800 rounded-2xl p-12 text-center max-w-xl mx-auto space-y-4 my-8">
+        <GlassCard variant="subtle" className="p-12 text-center max-w-xl mx-auto space-y-4 my-8">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-navy-850 border border-navy-750 flex items-center justify-center text-amber-400">
             <Search className="w-7 h-7" />
           </div>
@@ -356,22 +357,22 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
             <RotateCcw className="w-4 h-4" />
             Reset All Filters
           </button>
-        </div>
+        </GlassCard>
       ) : (
         /* Transaction Ledger List */
-        <div className="bg-navy-900 border border-navy-800 rounded-2xl overflow-hidden shadow-card-dark">
-          <div className="px-6 py-4 border-b border-navy-800 flex items-center justify-between">
+        <GlassCard variant="panel" className="overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
               Recorded Activity ({filteredTransactions.length})
             </h3>
-            <span className="text-xs text-slate-500">Sorted Newest First</span>
+            <span className="text-xs text-slate-400 font-mono">Sorted Newest First</span>
           </div>
 
-          <div className="divide-y divide-navy-800/80">
+          <div className="divide-y divide-white/[0.08]">
             {filteredTransactions.map((tx) => (
               <div
                 key={tx.id}
-                className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-navy-850/50 transition-colors"
+                className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.03] transition-colors"
               >
                 <div className="flex items-start gap-3.5">
                   <div
@@ -390,11 +391,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                   <div>
                     <h4 className="text-sm font-bold text-slate-100">{tx.title}</h4>
                     <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-400">
-                      <span className="inline-flex items-center gap-1 bg-navy-850 px-2 py-0.5 rounded border border-navy-750 text-[11px]">
-                        <Tag className="w-3 h-3 text-slate-500" />
+                      <span className="inline-flex items-center gap-1 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.08] text-[11px]">
+                        <Tag className="w-3 h-3 text-slate-400" />
                         {tx.category}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
                         <Calendar className="w-3 h-3" />
                         {new Date(tx.date).toLocaleDateString('en-IN', {
                           year: 'numeric',
@@ -404,7 +405,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                       </span>
                     </div>
                     {tx.notes && (
-                      <p className="text-xs text-slate-500 mt-1.5 italic">"{tx.notes}"</p>
+                      <p className="text-xs text-slate-400 mt-1.5 italic">"{tx.notes}"</p>
                     )}
                   </div>
                 </div>
@@ -417,14 +418,14 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({ onNavigateTo
                   >
                     {tx.type === 'expense' ? '−' : '+'}{formatINR(tx.amount)}
                   </span>
-                  <span className="block text-[10px] text-slate-500 uppercase tracking-wider">
+                  <span className="block text-[10px] text-slate-400 uppercase tracking-wider">
                     {tx.type}
                   </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </GlassCard>
       )}
 
       {/* Add Income Modal */}

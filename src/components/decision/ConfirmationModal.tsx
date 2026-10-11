@@ -53,7 +53,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       aria-labelledby="confirm-purchase-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-md animate-fade-in"
     >
-      <div className="relative w-full max-w-lg bg-navy-900 border border-navy-700/80 rounded-2xl shadow-card-dark p-6 overflow-hidden">
+      <div className="relative w-full max-w-lg glass-panel-elevated rounded-2xl shadow-[0_24px_60px_0_rgba(0,0,0,0.65)] p-6 overflow-hidden">
         {/* Accent glow on top */}
         <div
           className={`absolute top-0 left-0 right-0 h-1.5 ${

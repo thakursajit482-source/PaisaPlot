@@ -44,7 +44,7 @@ export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfi
       aria-labelledby="reset-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-sm animate-fade-in"
     >
-      <div className="relative w-full max-w-md bg-navy-900 border border-navy-750 rounded-2xl shadow-card-dark p-6 overflow-hidden">
+      <div className="relative w-full max-w-md glass-panel-elevated rounded-2xl shadow-[0_24px_60px_0_rgba(0,0,0,0.65)] p-6 overflow-hidden">
         {/* Accent top line */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-rose-500" />
 

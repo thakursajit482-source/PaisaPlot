@@ -46,13 +46,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-navy-950/85 backdrop-blur-md border-b border-navy-800">
+      <header className="sticky top-0 z-40 bg-[#07090e]/80 backdrop-blur-[20px] border-b border-white/[0.08] shadow-[0_4px_24px_0_rgba(0,0,0,0.4)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
             {/* Brand Logo */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-lime to-emerald-400 p-0.5 shadow-glow-lime flex items-center justify-center">
-                <div className="w-full h-full bg-navy-950 rounded-[10px] flex items-center justify-center text-brand-lime">
+                <div className="w-full h-full bg-[#07090e] rounded-[10px] flex items-center justify-center text-brand-lime">
                   <Compass className="w-5 h-5" />
                 </div>
               </div>
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             </div>
 
             {/* Desktop Navigation Tabs */}
-            <nav className="hidden md:flex items-center gap-1 bg-navy-900/90 p-1 rounded-xl border border-navy-800">
+            <nav className="hidden md:flex items-center gap-1 bg-white/[0.03] p-1 rounded-xl border border-white/[0.08] backdrop-blur-sm">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -85,10 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                       isActive
                         ? item.highlight
                           ? 'bg-brand-lime text-navy-950 shadow-glow-lime font-bold'
-                          : 'bg-navy-800 text-slate-100 shadow-sm'
+                          : 'bg-white/[0.08] text-slate-100 border border-white/[0.1] shadow-sm'
                         : item.highlight
                         ? 'text-brand-lime hover:bg-brand-lime/10'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-navy-850'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                         className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                           isActive
                             ? 'bg-navy-950 text-slate-100'
-                            : 'bg-navy-750 text-slate-300'
+                            : 'bg-white/[0.08] text-slate-300'
                         }`}
                       >
                         {item.badge}
@@ -111,17 +111,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
 
             {/* Live Stats Pill & Reset Control */}
             <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-3 bg-navy-900/60 px-3 py-1.5 rounded-xl border border-navy-800 text-xs">
+              <div className="hidden lg:flex items-center gap-3 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08] text-xs font-mono">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 text-[11px]">Spendable:</span>
-                  <span className="font-mono font-bold text-emerald-400">
+                  <span className="text-slate-400 text-[11px] font-sans">Spendable:</span>
+                  <span className="font-bold text-emerald-400">
                     ₹{metrics.spendableAfterCommitments.toLocaleString('en-IN')}
                   </span>
                 </div>
-                <div className="w-px h-3 bg-navy-750" />
+                <div className="w-px h-3 bg-white/[0.08]" />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 text-[11px]">Daily:</span>
-                  <span className="font-mono font-bold text-brand-lime">
+                  <span className="text-slate-400 text-[11px] font-sans">Daily:</span>
+                  <span className="font-bold text-brand-lime">
                     ₹{metrics.dailyAllowance.toFixed(0)}/d
                   </span>
                 </div>
@@ -132,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 type="button"
                 onClick={() => setIsResetModalOpen(true)}
                 title="Reset to initial ₹10,000 / 30-day demo state"
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-navy-900 hover:bg-navy-850 border border-navy-800 hover:border-navy-700 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.08] transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Reset Demo</span>

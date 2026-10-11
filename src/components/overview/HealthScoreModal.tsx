@@ -86,7 +86,7 @@ export const HealthScoreModal: React.FC<HealthScoreModalProps> = ({
       aria-labelledby="health-score-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
     >
-      <div className="relative w-full max-w-2xl max-h-[90vh] bg-navy-900 border border-navy-750 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-2xl max-h-[90vh] glass-panel-elevated rounded-2xl shadow-[0_24px_60px_0_rgba(0,0,0,0.65)] flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-navy-800 bg-navy-950/60">
           <div className="flex items-center gap-3">

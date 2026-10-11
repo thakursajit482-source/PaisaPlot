@@ -20,6 +20,7 @@ import { useFinance } from '../../context/FinanceContext';
 import { EXPENSE_CATEGORIES, ExpenseCategory, PurchaseSimulationInput, SimulationResult } from '../../types/finance';
 import { ConfirmationModal } from './ConfirmationModal';
 import { formatINR } from '../../finance/calculations';
+import { GlassCard } from '../common/GlassmorphismCard';
 
 const PRESET_SCENARIOS = [
   { title: 'Dinner & Movies', category: 'Food & Dining', amount: 650, note: 'Safe casual outing' },
@@ -178,16 +179,16 @@ export const DecisionLab: React.FC = () => {
         </div>
 
         {/* Quick Baseline Anchor Pill */}
-        <div className="flex items-center gap-3 bg-navy-900 border border-navy-800 rounded-xl px-4 py-2.5 self-start md:self-auto shadow-sm">
+        <div className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-2.5 self-start md:self-auto shadow-sm backdrop-blur-sm">
           <div className="text-right">
-            <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Available Balance</span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Available Balance</span>
             <span className="text-base font-extrabold text-slate-100 font-mono">
               {formatINR(metrics.balance)}
             </span>
           </div>
-          <div className="h-7 w-px bg-navy-800" />
+          <div className="h-7 w-px bg-white/[0.08]" />
           <div className="text-right">
-            <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Daily Allowance</span>
+            <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Daily Allowance</span>
             <span className="text-base font-extrabold text-brand-lime font-mono">
               {formatINR(metrics.dailyAllowance, { decimals: 0 })}/day
             </span>
@@ -199,7 +200,7 @@ export const DecisionLab: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Input Form, Interactive Range Slider & Presets (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden">
+          <GlassCard variant="panel" glow="none" className="p-6 relative overflow-hidden">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-brand-lime" />
@@ -228,7 +229,7 @@ export const DecisionLab: React.FC = () => {
                     key={preset.title}
                     type="button"
                     onClick={() => handlePresetClick(preset)}
-                    className="text-xs px-2.5 py-1.5 rounded-lg bg-navy-950 hover:bg-navy-800 text-slate-300 border border-navy-750 hover:border-brand-lime/40 transition-all cursor-pointer flex items-center gap-1.5"
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] text-slate-300 border border-white/[0.08] hover:border-brand-lime/40 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <span>{preset.title}</span>
                     <span className="font-mono text-brand-lime text-[11px] font-bold">
@@ -254,7 +255,7 @@ export const DecisionLab: React.FC = () => {
                     if (formError) setFormError(null);
                   }}
                   placeholder="e.g. Ergonomic Keyboard, Dinner Buffet, Smart Watch"
-                  className="w-full px-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                   required
                 />
               </div>
@@ -268,7 +269,7 @@ export const DecisionLab: React.FC = () => {
                   id="purchase-category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-                  className="w-full px-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2.5 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-sm text-slate-100 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all cursor-pointer"
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
                     <option key={cat} value={cat}>
@@ -290,21 +291,21 @@ export const DecisionLab: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleSpendablePercent(0.25)}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-slate-400 hover:text-slate-200 border border-navy-800 cursor-pointer"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.03] hover:bg-white/[0.07] text-slate-400 hover:text-slate-200 border border-white/[0.08] cursor-pointer"
                       >
                         25%
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSpendablePercent(0.5)}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-slate-400 hover:text-slate-200 border border-navy-800 cursor-pointer"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.03] hover:bg-white/[0.07] text-slate-400 hover:text-slate-200 border border-white/[0.08] cursor-pointer"
                       >
                         50%
                       </button>
                       <button
                         type="button"
                         onClick={() => handleSpendablePercent(1)}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-navy-950 hover:bg-navy-800 text-brand-lime border border-navy-800 font-semibold cursor-pointer"
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.03] hover:bg-white/[0.07] text-brand-lime border border-white/[0.08] font-semibold cursor-pointer"
                       >
                         Max Spendable
                       </button>
@@ -327,7 +328,7 @@ export const DecisionLab: React.FC = () => {
                       if (formError) setFormError(null);
                     }}
                     placeholder="e.g. 1500"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-base text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-base text-slate-100 font-mono placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                     required
                   />
                 </div>
@@ -347,7 +348,7 @@ export const DecisionLab: React.FC = () => {
                     aria-label="Hypothetical purchase amount slider"
                     className="w-full h-2 bg-navy-950 rounded-lg appearance-none cursor-pointer accent-brand-lime"
                   />
-                  <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                  <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
                     <span>₹0</span>
                     <span>Spendable: {formatINR(metrics.spendableAfterCommitments)}</span>
                     <span>Max: {formatINR(maxSliderLimit)}</span>
@@ -359,21 +360,21 @@ export const DecisionLab: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleQuickAdd(250)}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] px-2 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] text-slate-400 hover:text-slate-200 border border-white/[0.08] transition-all flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3 text-brand-lime" /> ₹250
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickAdd(500)}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] px-2 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] text-slate-400 hover:text-slate-200 border border-white/[0.08] transition-all flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3 text-brand-lime" /> ₹500
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickAdd(1000)}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-navy-950 hover:bg-navy-850 text-slate-400 hover:text-slate-200 border border-navy-800 transition-all flex items-center gap-0.5 cursor-pointer"
+                    className="text-[11px] px-2 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] text-slate-400 hover:text-slate-200 border border-white/[0.08] transition-all flex items-center gap-0.5 cursor-pointer"
                   >
                     <Plus className="w-3 h-3 text-brand-lime" /> ₹1,000
                   </button>
@@ -391,7 +392,7 @@ export const DecisionLab: React.FC = () => {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Workstation upgrade, Birthday dinner"
-                  className="w-full px-3.5 py-2.5 bg-navy-950 border border-navy-750 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#07090e]/80 border border-white/[0.08] rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-lime focus:ring-1 focus:ring-brand-lime transition-all"
                 />
               </div>
 
@@ -419,10 +420,10 @@ export const DecisionLab: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
+          </GlassCard>
 
           {/* Transparent Mathematical Sandbox Explanation Card */}
-          <div className="bg-navy-900/60 border border-navy-800 rounded-2xl p-5 text-xs text-slate-400 space-y-2.5">
+          <GlassCard variant="subtle" className="p-5 text-xs text-slate-400 space-y-2.5">
             <div className="flex items-center gap-2 text-slate-300 font-semibold">
               <Info className="w-4 h-4 text-brand-lime" />
               <span>Transparent Decision Mathematics</span>
@@ -430,23 +431,23 @@ export const DecisionLab: React.FC = () => {
             <p className="leading-relaxed text-[11px]">
               Simulations in PaisaPilot are 100% deterministic and client-side. Adjusting values never deducts money or alters your recorded balance until you explicitly verify confirmation.
             </p>
-            <div className="pt-1 text-[11px] text-slate-400 border-t border-navy-800/80 flex items-center justify-between">
+            <div className="pt-1 text-[11px] text-slate-400 border-t border-white/[0.08] flex items-center justify-between">
               <span>Locked Unpaid Bills:</span>
               <strong className="text-slate-200 font-mono">{formatINR(state.unpaidCommitments)}</strong>
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Right Column: Live What-If Comparison Matrix & Risk Explainability (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Risk Explainability & Impact Banner */}
           <div
-            className={`border rounded-2xl p-5 sm:p-6 transition-all ${getSeverityAlertStyle(
+            className={`border rounded-2xl p-5 sm:p-6 transition-all glass-panel ${getSeverityAlertStyle(
               simulation.impactAnalysis.severity
             )}`}
           >
             <div className="flex items-start gap-3.5">
-              <div className="p-2.5 rounded-xl bg-navy-950/60 shrink-0 mt-0.5 border border-navy-800">
+              <div className="p-2.5 rounded-xl bg-navy-950/60 shrink-0 mt-0.5 border border-white/[0.08]">
                 {simulation.impactAnalysis.severity === 'neutral' ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 ) : simulation.impactAnalysis.severity === 'warning' ? (
@@ -477,7 +478,7 @@ export const DecisionLab: React.FC = () => {
                 </p>
 
                 {hasSimulatedAmount && (
-                  <div className="pt-2 text-xs text-slate-300 space-y-1.5 border-t border-navy-800/40">
+                  <div className="pt-2 text-xs text-slate-300 space-y-1.5 border-t border-white/[0.08]">
                     <div className="flex items-center gap-1.5">
                       <strong className="text-slate-200">Runway Impact:</strong>
                       <span>{simulation.impactAnalysis.runwayImpactText}</span>
@@ -493,8 +494,8 @@ export const DecisionLab: React.FC = () => {
           </div>
 
           {/* High-Impact Before & After Metrics Comparison Grid */}
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-5">
-            <div className="flex items-center justify-between pb-2 border-b border-navy-800">
+          <GlassCard variant="panel" glow="lime" className="p-6 space-y-5">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-brand-lime" />
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
@@ -508,7 +509,7 @@ export const DecisionLab: React.FC = () => {
 
             <div className="space-y-3">
               {/* Row 1: Total Bank Balance */}
-              <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
+              <div className="p-4 bg-white/[0.025] rounded-xl border border-white/[0.08] hover:border-white/[0.14] transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <IndianRupee className="w-3.5 h-3.5 text-slate-400" />
@@ -546,7 +547,7 @@ export const DecisionLab: React.FC = () => {
               </div>
 
               {/* Row 2: Spendable Cash After Commitments */}
-              <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
+              <div className="p-4 bg-white/[0.025] rounded-xl border border-white/[0.08] hover:border-white/[0.14] transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-emerald-400" />
@@ -568,14 +569,14 @@ export const DecisionLab: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Current</span>
                     <span className="text-base sm:text-lg font-bold text-slate-200 font-mono">
                       {formatINR(metrics.spendableAfterCommitments)}
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Simulated</span>
                     <span
                       className={`text-base sm:text-lg font-bold font-mono ${
                         simulation.simulatedMetrics.spendableAfterCommitments < 0
@@ -590,7 +591,7 @@ export const DecisionLab: React.FC = () => {
               </div>
 
               {/* Row 3: Daily Discretionary Allowance */}
-              <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
+              <div className="p-4 bg-white/[0.025] rounded-xl border border-white/[0.08] hover:border-white/[0.14] transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <TrendingDown className="w-3.5 h-3.5 text-brand-lime" />
@@ -610,14 +611,14 @@ export const DecisionLab: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Current</span>
                     <span className="text-base sm:text-lg font-bold text-slate-200 font-mono">
                       {formatINR(metrics.dailyAllowance, { decimals: 2 })}/d
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Simulated</span>
                     <span
                       className={`text-base sm:text-lg font-bold font-mono ${
                         simulation.simulatedMetrics.dailyAllowance < 50
@@ -634,7 +635,7 @@ export const DecisionLab: React.FC = () => {
               </div>
 
               {/* Row 4: Savings Goal Feasibility */}
-              <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
+              <div className="p-4 bg-white/[0.025] rounded-xl border border-white/[0.08] hover:border-white/[0.14] transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5 text-brand-violet-light" />
@@ -656,14 +657,14 @@ export const DecisionLab: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Current Target</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Current Target</span>
                     <span className="text-sm font-semibold text-emerald-400">
                       {metrics.savingsFeasible ? 'Protected' : 'Strained'}
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500 block uppercase">Simulated Status</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Simulated Status</span>
                     <span
                       className={`text-sm font-bold ${
                         simulation.simulatedMetrics.savingsFeasible
@@ -680,7 +681,7 @@ export const DecisionLab: React.FC = () => {
               </div>
 
               {/* Row 5: Financial Health Score */}
-              <div className="p-4 bg-navy-950/70 rounded-xl border border-navy-800/80 hover:border-navy-700 transition-all">
+              <div className="p-4 bg-white/[0.025] rounded-xl border border-white/[0.08] hover:border-white/[0.14] transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-brand-violet" />
@@ -700,14 +701,14 @@ export const DecisionLab: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-slate-500 block uppercase">Current</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Current</span>
                     <span className="text-sm font-bold text-slate-200 font-mono">
                       {metrics.healthScore}/100 ({metrics.riskLevel.toUpperCase()})
                     </span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-600" />
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-500 block uppercase">Simulated</span>
+                    <span className="text-[10px] text-slate-400 block uppercase">Simulated</span>
                     <span
                       className={`text-sm font-bold font-mono ${
                         simulation.simulatedMetrics.riskLevel === 'safe'
@@ -723,7 +724,7 @@ export const DecisionLab: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </GlassCard>
         </div>
       </div>
 

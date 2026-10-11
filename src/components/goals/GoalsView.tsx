@@ -18,6 +18,7 @@ import { formatINR, calculateGoalProgress } from '../../finance/calculations';
 import { GoalModal } from './GoalModal';
 import { GoalContributionModal } from './GoalContributionModal';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { GlassCard } from '../common/GlassmorphismCard';
 
 interface GoalsViewProps {
   onNavigateToDecisionLab: () => void;
@@ -73,7 +74,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
       </div>
 
       {/* Aggregate Overview Card */}
-      <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark relative overflow-hidden">
+      <GlassCard variant="panel" glow="violet" className="p-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-brand-violet/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
@@ -91,14 +92,14 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
 
           <div className="flex items-baseline gap-3 text-right">
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Total Funded</span>
+              <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Total Funded</span>
               <span className="text-xl font-extrabold text-emerald-400 font-mono">
                 {formatINR(totalSaved)}
               </span>
             </div>
             <span className="text-slate-600 font-mono">/</span>
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-slate-500 block">Total Target</span>
+              <span className="text-[11px] uppercase tracking-wider text-slate-400 block">Total Target</span>
               <span className="text-xl font-extrabold text-slate-200 font-mono">
                 {formatINR(totalTarget)}
               </span>
@@ -117,7 +118,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
             </span>
           </div>
 
-          <div className="h-2.5 w-full bg-navy-950 rounded-full overflow-hidden border border-navy-800">
+          <div className="h-2.5 w-full bg-navy-950/80 rounded-full overflow-hidden border border-white/[0.08]">
             <div
               style={{ width: `${overallProgress}%` }}
               className="h-full bg-gradient-to-r from-brand-violet to-brand-violet-light transition-all duration-500 rounded-full"
@@ -126,8 +127,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
         </div>
 
         {/* Live Safety Checks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-3 border-t border-navy-800/80">
-          <div className="flex items-center justify-between p-2.5 bg-navy-950/60 rounded-xl border border-navy-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-3 border-t border-white/[0.08]">
+          <div className="flex items-center justify-between p-2.5 bg-white/[0.03] rounded-xl border border-white/[0.08]">
             <span className="flex items-center gap-1.5 text-slate-400">
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
               Spendable Cash Margin:
@@ -137,7 +138,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
             </span>
           </div>
 
-          <div className="flex items-center justify-between p-2.5 bg-navy-950/60 rounded-xl border border-navy-800">
+          <div className="flex items-center justify-between p-2.5 bg-white/[0.03] rounded-xl border border-white/[0.08]">
             <span className="flex items-center gap-1.5 text-slate-400">
               {metrics.savingsFeasible ? (
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -151,12 +152,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
             </span>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Goals Cards List */}
       {goals.length === 0 ? (
-        <div className="bg-navy-900/60 border border-navy-800 rounded-2xl p-12 text-center max-w-xl mx-auto space-y-4 my-8">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-navy-850 border border-navy-750 flex items-center justify-center text-slate-400">
+        <GlassCard variant="subtle" className="p-12 text-center max-w-xl mx-auto space-y-4 my-8">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-400">
             <Target className="w-7 h-7" />
           </div>
           <div className="space-y-1">
@@ -173,16 +174,18 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
             <PlusCircle className="w-4 h-4" />
             Create Your First Goal
           </button>
-        </div>
+        </GlassCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {goals.map((goal) => {
             const { progressPercent, remainingTarget: remaining, isCompleted } = calculateGoalProgress(goal);
 
             return (
-              <div
+              <GlassCard
                 key={goal.id}
-                className="bg-navy-900 border border-navy-800 rounded-2xl p-5 shadow-card-dark flex flex-col justify-between hover:border-navy-750 transition-all space-y-4"
+                variant="panel"
+                hoverEffect
+                className="p-5 flex flex-col justify-between space-y-4"
               >
                 <div>
                   {/* Card Header */}
@@ -190,7 +193,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                     <div>
                       <h3 className="text-base font-bold text-slate-100">{goal.name}</h3>
                       <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
-                        <Calendar className="w-3 h-3 text-slate-500" />
+                        <Calendar className="w-3 h-3 text-slate-400" />
                         <span>{getTargetDateLabel(goal.targetDate)}</span>
                       </div>
                     </div>
@@ -200,7 +203,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                         type="button"
                         onClick={() => setGoalToEdit(goal)}
                         title="Edit goal"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-navy-850 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -208,7 +211,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                         type="button"
                         onClick={() => setGoalToDelete(goal)}
                         title="Delete goal"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-navy-850 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/[0.04] transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -216,7 +219,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                   </div>
 
                   {/* Amounts */}
-                  <div className="bg-navy-950/60 p-3 rounded-xl border border-navy-800/80 mb-3 space-y-1">
+                  <div className="bg-white/[0.03] p-3 rounded-xl border border-white/[0.08] mb-3 space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">Target Amount:</span>
                       <span className="font-mono font-bold text-slate-200">{formatINR(goal.targetAmount)}</span>
@@ -225,8 +228,8 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                       <span className="text-slate-400">Already Saved:</span>
                       <span className="font-mono font-bold text-emerald-400">{formatINR(goal.alreadySaved)}</span>
                     </div>
-                    <div className="flex justify-between text-xs pt-1 border-t border-navy-850">
-                      <span className="text-slate-500">Remaining Needed:</span>
+                    <div className="flex justify-between text-xs pt-1 border-t border-white/[0.08]">
+                      <span className="text-slate-400">Remaining Needed:</span>
                       <span className="font-mono text-slate-300 font-semibold">{formatINR(remaining)}</span>
                     </div>
                   </div>
@@ -237,7 +240,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                       <span className="text-slate-400">Funded</span>
                       <span className="font-mono text-brand-violet-light">{progressPercent}%</span>
                     </div>
-                    <div className="h-2 w-full bg-navy-950 rounded-full overflow-hidden border border-navy-850">
+                    <div className="h-2 w-full bg-navy-950/80 rounded-full overflow-hidden border border-white/[0.08]">
                       <div
                         style={{ width: `${progressPercent}%` }}
                         className={`h-full rounded-full transition-all duration-300 ${
@@ -249,7 +252,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                 </div>
 
                 {/* Footer Action */}
-                <div className="pt-2 border-t border-navy-800/80">
+                <div className="pt-2 border-t border-white/[0.08]">
                   {isCompleted ? (
                     <div className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center justify-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4" />
@@ -266,14 +269,14 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
                     </button>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             );
           })}
         </div>
       )}
 
       {/* Decision Lab Callout */}
-      <div className="bg-navy-900/40 border border-navy-800/80 rounded-2xl p-5 text-xs text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <GlassCard variant="subtle" className="p-5 text-xs text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-slate-300">
           <Sparkles className="w-4 h-4 text-brand-lime shrink-0" />
           <span>
@@ -283,12 +286,12 @@ export const GoalsView: React.FC<GoalsViewProps> = ({ onNavigateToDecisionLab })
         <button
           type="button"
           onClick={onNavigateToDecisionLab}
-          className="self-start sm:self-auto px-4 py-2 bg-navy-850 hover:bg-navy-800 text-slate-200 rounded-xl font-semibold transition-colors border border-navy-750 flex items-center gap-1.5 shrink-0"
+          className="self-start sm:self-auto px-4 py-2 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 rounded-xl font-semibold transition-colors border border-white/[0.08] flex items-center gap-1.5 shrink-0"
         >
           <span>Test in Decision Lab</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
-      </div>
+      </GlassCard>
 
       {/* Modals */}
       <GoalModal

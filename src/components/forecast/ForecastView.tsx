@@ -23,6 +23,7 @@ import { SubscriptionModal } from './SubscriptionModal';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { ForecastChart } from './ForecastChart';
 import { ForecastControls } from './ForecastControls';
+import { GlassCard } from '../common/GlassmorphismCard';
 
 interface ForecastViewProps {
   onNavigateToDecisionLab: () => void;
@@ -123,7 +124,7 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
       {/* 4 Core Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Current Actual Balance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
             Current Balance
           </span>
@@ -131,10 +132,10 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
             {formatINR(metrics.balance)}
           </span>
           <span className="text-xs text-slate-500 block mt-1">Starting point for day 0</span>
-        </div>
+        </GlassCard>
 
         {/* Metric 2: Expected Future Charges */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Future Charges ({scenarioOptions.daysWindow || 30}d)
@@ -147,10 +148,10 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
           <span className="text-xs text-slate-500 block mt-1">
             Bills: {formatINR(forecast.totalExpectedBills || 0)} • Subs: {formatINR(forecast.totalExpectedSubscriptions || 0)}
           </span>
-        </div>
+        </GlassCard>
 
         {/* Metric 3: Lowest Projected Trough Balance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
               Lowest Projected Balance
@@ -173,10 +174,10 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
           <span className="text-xs text-slate-500 block mt-1">
             {(forecast.lowestProjectedBalance ?? 0) >= 2000 ? 'Comfortably above savings cushion' : 'Tight trough margin'}
           </span>
-        </div>
+        </GlassCard>
 
         {/* Metric 4: Estimated End Balance */}
-        <div className="bg-navy-900 border border-navy-800 rounded-xl p-4">
+        <GlassCard variant="panel" className="p-4" glow="lime">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
             Estimated Day {scenarioOptions.daysWindow || 30} Balance
           </span>
@@ -193,7 +194,7 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
           <span className="text-xs text-slate-500 block mt-1">
             Pacing {formatINR(forecast.assumptions.dailyBurnSimulated ?? forecast.assumptions.dailyBurnBaseline, { decimals: 0 })}/day discretionary
           </span>
-        </div>
+        </GlassCard>
       </div>
 
       {/* Forecast Navigation Tabs */}
@@ -251,8 +252,8 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
           />
 
           {/* Interactive Recharts Cash Flow Chart */}
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-5 shadow-card-dark space-y-3">
-            <div className="flex items-center justify-between pb-3 border-b border-navy-800">
+          <GlassCard variant="panel" glow="lime" className="p-5 space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-brand-lime" />
                 <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
@@ -264,10 +265,10 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
               </span>
             </div>
             <ForecastChart forecast={forecast} isScenarioActive={isScenarioActive} />
-          </div>
+          </GlassCard>
 
           {/* Detailed Milestone Progression Table */}
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl overflow-hidden shadow-card-dark">
+          <GlassCard variant="panel" className="overflow-hidden">
             <div className="px-6 py-4 border-b border-navy-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-brand-lime" />
@@ -375,15 +376,15 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
                 </tbody>
               </table>
             </div>
-          </div>
+          </GlassCard>
         </div>
       )}
 
       {/* TAB 2: Bills & Commitments Management */}
       {activeTab === 'bills' && (
         <div className="space-y-4">
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark">
-            <div className="flex items-center justify-between pb-4 border-b border-navy-800 mb-4">
+          <GlassCard variant="panel" className="p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
               <div>
                 <h3 className="text-base font-bold text-slate-100">Scheduled Bill Commitments</h3>
                 <p className="text-xs text-slate-400">
@@ -404,11 +405,11 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
             </div>
 
             {bills.length === 0 ? (
-              <div className="text-center py-10 bg-navy-950/40 rounded-xl border border-navy-800">
+              <GlassCard variant="subtle" className="text-center py-10">
                 <Receipt className="w-8 h-8 mx-auto text-slate-500 mb-2" />
                 <p className="text-sm font-semibold text-slate-300">No Bill Commitments Found</p>
                 <p className="text-xs text-slate-500 mt-1">Add upcoming rent or utility bills to protect cash.</p>
-              </div>
+              </GlassCard>
             ) : (
               <div className="divide-y divide-navy-800/80">
                 {bills.map((bill) => (
@@ -488,15 +489,15 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
                 ))}
               </div>
             )}
-          </div>
+          </GlassCard>
         </div>
       )}
 
       {/* TAB 3: Subscriptions Management */}
       {activeTab === 'subscriptions' && (
         <div className="space-y-4">
-          <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark">
-            <div className="flex items-center justify-between pb-4 border-b border-navy-800 mb-4">
+          <GlassCard variant="panel" className="p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
               <div>
                 <h3 className="text-base font-bold text-slate-100">Recurring Subscriptions</h3>
                 <p className="text-xs text-slate-400">
@@ -517,11 +518,11 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
             </div>
 
             {subscriptions.length === 0 ? (
-              <div className="text-center py-10 bg-navy-950/40 rounded-xl border border-navy-800">
+              <GlassCard variant="subtle" className="text-center py-10">
                 <RefreshCw className="w-8 h-8 mx-auto text-slate-500 mb-2" />
                 <p className="text-sm font-semibold text-slate-300">No Subscriptions Tracked</p>
                 <p className="text-xs text-slate-500 mt-1">Add Netflix, gym, or software subscriptions.</p>
-              </div>
+              </GlassCard>
             ) : (
               <div className="divide-y divide-navy-800/80">
                 {subscriptions.map((sub) => (
@@ -608,12 +609,12 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
                 ))}
               </div>
             )}
-          </div>
+          </GlassCard>
         </div>
       )}
 
       {/* Assumptions & Limitations Disclosure */}
-      <div className="bg-navy-900/40 border border-navy-800/80 rounded-2xl p-6 text-xs text-slate-400 space-y-2.5">
+      <GlassCard variant="subtle" className="p-6 text-xs text-slate-400 space-y-2.5">
         <div className="flex items-center gap-2 text-brand-lime font-bold text-sm">
           <Clock className="w-4 h-4" />
           <span>Forecast Assumptions & Mathematical Model</span>
@@ -637,7 +638,7 @@ export const ForecastView: React.FC<ForecastViewProps> = ({ onNavigateToDecision
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-      </div>
+      </GlassCard>
 
       {/* Modals */}
       <BillModal

@@ -31,6 +31,7 @@ import { AddIncomeModal } from '../common/AddIncomeModal';
 import { UnexpectedExpenseModal } from '../common/UnexpectedExpenseModal';
 import { HealthScoreModal } from './HealthScoreModal';
 import { GoalModal } from '../goals/GoalModal';
+import { GlassCard } from '../common/GlassmorphismCard';
 
 interface OverviewViewProps {
   onNavigateToDecisionLab: () => void;
@@ -101,7 +102,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   return (
     <div className="space-y-8 animate-fade-in">
       {/* 1. Command Center Header & Quick Actions Bar */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-navy-900 via-navy-850 to-navy-900 border border-navy-750 rounded-2xl p-6 md:p-8 shadow-card-dark">
+      <GlassCard variant="panel" glow="lime" className="p-6 md:p-8">
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-lime/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
@@ -157,30 +158,30 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* 2. Distinctive Financial Hero Section (Balance Anchor + Allowance Gauge) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Hero Anchor (7 Cols): Current Balance & 30-Day Runway Bar */}
-        <div className="lg:col-span-7 bg-navy-900 border border-navy-800 rounded-2xl p-6 sm:p-7 shadow-card-dark relative overflow-hidden flex flex-col justify-between group hover:border-navy-700 transition-all">
+        <GlassCard variant="panel" glow="lime" hoverEffect className="lg:col-span-7 p-6 sm:p-7 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-navy-950 text-brand-lime border border-navy-800 shadow-sm">
+                <div className="p-2.5 rounded-xl bg-white/[0.04] text-brand-lime border border-white/[0.08] shadow-sm">
                   <Wallet className="w-5 h-5" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                     Current Total Balance
                   </span>
-                  <span className="text-[11px] text-slate-500 font-mono">
+                  <span className="text-[11px] text-slate-400 font-mono">
                     Starting Budget: {formatINR(state.startingBudget)}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-navy-950 border border-navy-800 text-slate-300 font-semibold">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-300 font-semibold">
                   {state.daysRemaining} Days Left
                 </span>
               </div>
@@ -214,7 +215,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           </div>
 
           {/* Integrated 30-Day Financial Runway Indicator */}
-          <div className="mt-6 pt-5 border-t border-navy-800/80 space-y-3">
+          <div className="mt-6 pt-5 border-t border-white/[0.08] space-y-3">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-brand-lime" />
@@ -229,7 +230,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
             {/* Progress Bar of Runway Days */}
             <div className="space-y-1.5">
-              <div className="w-full bg-navy-950 h-2.5 rounded-full overflow-hidden border border-navy-800 flex">
+              <div className="w-full bg-navy-950/80 h-2.5 rounded-full overflow-hidden border border-white/[0.08] flex">
                 <div
                   style={{ width: `${runway.runwayPercent}%` }}
                   className={`h-full rounded-full transition-all duration-500 ${
@@ -254,21 +255,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               {runway.description}
             </p>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Right Hero Block (5 Cols): Dynamic Daily Discretionary Allowance Speedometer */}
-        <div className="lg:col-span-5 bg-navy-900 border border-navy-800 rounded-2xl p-6 sm:p-7 shadow-card-dark relative overflow-hidden flex flex-col justify-between group hover:border-navy-700 transition-all">
+        <GlassCard variant="panel" glow="none" hoverEffect className="lg:col-span-5 p-6 sm:p-7 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-navy-950 text-brand-lime border border-navy-800 shadow-sm">
+                <div className="p-2.5 rounded-xl bg-white/[0.04] text-brand-lime border border-white/[0.08] shadow-sm">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                     Daily Discretionary Allowance
                   </span>
-                  <span className="text-[11px] text-slate-500">Paced for {state.daysRemaining} days</span>
+                  <span className="text-[11px] text-slate-400">Paced for {state.daysRemaining} days</span>
                 </div>
               </div>
 
@@ -288,7 +289,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-navy-800/80 space-y-3">
+          <div className="mt-6 pt-5 border-t border-white/[0.08] space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400">Total Discretionary Remaining:</span>
               <span className="font-mono font-bold text-slate-100 text-sm">
@@ -299,19 +300,19 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             <button
               type="button"
               onClick={onNavigateToDecisionLab}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim transition-all shadow-glow-lime flex items-center justify-center gap-2 cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Simulate Spend vs Today's Allowance</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       {/* 3. Meaningful Capital Structure Breakdown (Liquidity Ribbon) */}
-      <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-navy-800">
+      <GlassCard variant="panel" glow="none" className="p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
             <PieChart className="w-4 h-4 text-brand-lime" />
             <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
@@ -325,7 +326,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
         {/* Visual Partition Ribbon */}
         <div className="space-y-3">
-          <div className="h-5 w-full bg-navy-950 rounded-full overflow-hidden flex p-0.5 border border-navy-800 shadow-inner">
+          <div className="h-5 w-full bg-navy-950/80 rounded-full overflow-hidden flex p-0.5 border border-white/[0.08] shadow-inner">
             <div
               style={{ width: `${commitmentPercent}%` }}
               className="h-full bg-rose-500 rounded-l-full transition-all duration-500"
@@ -345,7 +346,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             {/* Pillar 1: Commitments */}
-            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+            <GlassCard variant="subtle" className="p-3.5 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-rose-400 font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
@@ -359,10 +360,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <p className="text-[10px] text-slate-400">
                 Essential bills ring-fenced from discretionary spending.
               </p>
-            </div>
+            </GlassCard>
 
             {/* Pillar 2: Savings Cushion */}
-            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+            <GlassCard variant="subtle" className="p-3.5 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-brand-violet-light font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-brand-violet shrink-0" />
@@ -376,10 +377,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <p className="text-[10px] text-slate-400">
                 Allocated goal cushion ({metrics.savingsProgressPercent}% funded so far).
               </p>
-            </div>
+            </GlassCard>
 
             {/* Pillar 3: Discretionary Spendable */}
-            <div className="bg-navy-950/80 p-3.5 rounded-xl border border-navy-800 space-y-1">
+            <GlassCard variant="subtle" className="p-3.5 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-brand-lime font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-brand-lime shrink-0" />
@@ -393,10 +394,10 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <p className="text-[10px] text-slate-400">
                 True unencumbered cash ready for safe daily use.
               </p>
-            </div>
+            </GlassCard>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       {/* 4. Concise Financial Insight Panel (Deterministic Calculations) */}
       <div className="space-y-4">
@@ -407,21 +408,21 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               Deterministic Financial Intelligence
             </h2>
           </div>
-          <span className="text-xs text-slate-500">100% Calculated • Zero Fabrication</span>
+          <span className="text-xs text-slate-400">100% Calculated • Zero Fabrication</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {insights.map((insight) => (
             <div
               key={insight.id}
-              className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+              className={`p-4 rounded-xl border transition-all flex flex-col justify-between glass-subtle ${
                 insight.type === 'success'
-                  ? 'bg-emerald-950/25 border-emerald-500/30 text-emerald-300'
+                  ? 'border-emerald-500/30 text-emerald-300'
                   : insight.type === 'warning'
-                  ? 'bg-amber-950/25 border-amber-500/30 text-amber-300'
+                  ? 'border-amber-500/30 text-amber-300'
                   : insight.type === 'critical'
-                  ? 'bg-rose-950/25 border-rose-500/30 text-rose-300'
-                  : 'bg-navy-900 border-navy-800 text-slate-300'
+                  ? 'border-rose-500/30 text-rose-300'
+                  : 'border-white/[0.08] text-slate-300'
               }`}
             >
               <div className="space-y-2">
@@ -430,7 +431,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     {insight.title}
                   </h3>
                   {insight.metricLabel && (
-                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-navy-950/80 border border-navy-750 text-slate-200">
+                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-slate-200">
                       {insight.metricLabel}
                     </span>
                   )}
@@ -441,7 +442,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               </div>
 
               {insight.actionText && (
-                <div className="pt-3 mt-3 border-t border-navy-800/60">
+                <div className="pt-3 mt-3 border-t border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => handleInsightAction(insight.actionTab)}
@@ -460,7 +461,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       {/* 5. Interconnected Planning Hub: Obligations & Envelopes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: Upcoming Obligations & 30-Day Forecast Safety */}
-        <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4 flex flex-col justify-between">
+        <GlassCard variant="panel" hoverEffect className="p-6 space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -485,7 +486,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="bg-navy-950/80 p-3 rounded-xl border border-navy-800">
+              <div className="bg-white/[0.03] p-3 rounded-xl border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
                   <Shield className="w-3.5 h-3.5 text-rose-400" />
                   <span>Unpaid Bills ({unpaidBillsCount})</span>
@@ -493,12 +494,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <div className="text-lg font-bold font-mono text-slate-100">
                   {formatINR(state.unpaidCommitments)}
                 </div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[10px] text-slate-400">
                   {state.bills.length} total tracked bills
                 </div>
               </div>
 
-              <div className="bg-navy-950/80 p-3 rounded-xl border border-navy-800">
+              <div className="bg-white/[0.03] p-3 rounded-xl border border-white/[0.08]">
                 <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
                   <Repeat className="w-3.5 h-3.5 text-sky-400" />
                   <span>Subscriptions ({activeSubsCount})</span>
@@ -506,17 +507,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <div className="text-lg font-bold font-mono text-slate-100">
                   {formatINR(forecast.totalExpectedSubscriptions)}
                 </div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[10px] text-slate-400">
                   30-day projected charges
                 </div>
               </div>
             </div>
 
-            <div className="p-3 bg-navy-950/60 rounded-xl border border-navy-800 flex items-center justify-between text-xs">
+            <div className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.08] flex items-center justify-between text-xs">
               <span className="text-slate-400">Lowest Projected Trough:</span>
               <span className="font-mono font-bold text-slate-200">
                 {formatINR(forecast.lowestProjectedBalance)}{' '}
-                <span className="text-slate-500 text-[11px] font-normal">
+                <span className="text-slate-400 text-[11px] font-normal">
                   (Day {forecast.lowestBalanceDay})
                 </span>
               </span>
@@ -528,17 +529,17 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToForecast}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-200 bg-navy-850 hover:bg-navy-800 border border-navy-750 hover:border-navy-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>View Full 30-Day Trajectory & Obligations</span>
                 <ArrowRight className="w-3.5 h-3.5 text-brand-lime" />
               </button>
             </div>
           )}
-        </div>
+        </GlassCard>
 
         {/* Card 2: Savings Goals Envelopes */}
-        <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4 flex flex-col justify-between">
+        <GlassCard variant="panel" hoverEffect className="p-6 space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -565,12 +566,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 return (
                   <div
                     key={goal.id}
-                    className="p-3 bg-navy-950/80 rounded-xl border border-navy-800 space-y-1.5"
+                    className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.08] space-y-1.5"
                   >
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-slate-200">{goal.name}</span>
-                        <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-navy-900 border border-navy-750 text-slate-400">
+                        <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] text-slate-400">
                           {goal.priority ?? 'medium'}
                         </span>
                       </div>
@@ -578,7 +579,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                         {formatINR(goal.alreadySaved)} / {formatINR(goal.targetAmount)}
                       </span>
                     </div>
-                    <div className="w-full bg-navy-900 h-1.5 rounded-full overflow-hidden border border-navy-800">
+                    <div className="w-full bg-navy-950/80 h-1.5 rounded-full overflow-hidden border border-white/[0.08]">
                       <div
                         style={{ width: `${pct}%` }}
                         className="h-full bg-brand-violet rounded-full transition-all duration-500"
@@ -595,25 +596,25 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToGoals}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-200 bg-navy-850 hover:bg-navy-800 border border-navy-750 hover:border-navy-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-200 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Manage & Fund Savings Goals</span>
                 <ArrowRight className="w-3.5 h-3.5 text-brand-violet-light" />
               </button>
             </div>
           )}
-        </div>
+        </GlassCard>
       </div>
 
       {/* 6. Recent Verified Activity Feed */}
-      <div className="bg-navy-900 border border-navy-800 rounded-2xl p-6 shadow-card-dark space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-navy-800">
+      <GlassCard variant="panel" className="p-6 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-2">
             <Receipt className="w-4 h-4 text-brand-lime" />
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
               Live Activity Feed
             </h3>
-            <span className="text-xs text-slate-500 font-mono ml-1">
+            <span className="text-xs text-slate-400 font-mono ml-1">
               ({recentTransactions.length} of {state.transactions.length})
             </span>
           </div>
@@ -631,8 +632,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
         </div>
 
         {recentTransactions.length === 0 ? (
-          <div className="text-center py-10 px-4 bg-navy-950/40 rounded-xl border border-navy-800/80 space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-navy-850 flex items-center justify-center text-slate-500">
+          <div className="text-center py-10 px-4 bg-white/[0.02] rounded-xl border border-white/[0.08] space-y-3">
+            <div className="w-12 h-12 mx-auto rounded-xl bg-white/[0.04] flex items-center justify-center text-slate-400">
               <Receipt className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -661,11 +662,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-navy-800/80">
+          <div className="divide-y divide-white/[0.08]">
             {recentTransactions.map((tx) => (
               <div
                 key={tx.id}
-                className="py-3.5 flex items-center justify-between gap-3 hover:bg-navy-850/40 px-2 rounded-xl transition-colors"
+                className="py-3.5 flex items-center justify-between gap-3 hover:bg-white/[0.03] px-2 rounded-xl transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -684,11 +685,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   <div>
                     <h4 className="text-sm font-bold text-slate-200">{tx.title}</h4>
                     <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
-                      <span className="inline-flex items-center gap-1 bg-navy-850 px-2 py-0.5 rounded text-[11px] border border-navy-750">
-                        <Tag className="w-3 h-3 text-slate-500" />
+                      <span className="inline-flex items-center gap-1 bg-white/[0.04] px-2 py-0.5 rounded text-[11px] border border-white/[0.08]">
+                        <Tag className="w-3 h-3 text-slate-400" />
                         {tx.category}
                       </span>
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[11px] text-slate-400">
                         {new Date(tx.date).toLocaleDateString('en-IN', {
                           month: 'short',
                           day: 'numeric',
@@ -706,7 +707,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   >
                     {tx.type === 'income' ? '+' : '−'}{formatINR(tx.amount)}
                   </span>
-                  <span className="block text-[10px] text-slate-500 uppercase tracking-wider">
+                  <span className="block text-[10px] text-slate-400 uppercase tracking-wider">
                     {tx.type}
                   </span>
                 </div>
@@ -714,7 +715,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             ))}
           </div>
         )}
-      </div>
+      </GlassCard>
 
       {/* Modals */}
       <AddIncomeModal
