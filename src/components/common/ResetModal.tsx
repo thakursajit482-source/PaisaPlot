@@ -8,6 +8,12 @@ interface ResetModalProps {
 }
 
 export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfirm }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  useEffect(() => {
+    setIsSubmitting(false);
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -19,6 +25,17 @@ export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfi
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleReset = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      onConfirm();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -89,14 +106,12 @@ export const ResetModal: React.FC<ResetModalProps> = ({ isOpen, onClose, onConfi
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="px-4 py-2.5 text-sm font-semibold text-navy-950 bg-amber-400 hover:bg-amber-300 rounded-xl transition-all shadow-md flex items-center gap-2"
+            disabled={isSubmitting}
+            onClick={handleReset}
+            className="px-4 py-2.5 text-sm font-semibold text-navy-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-            Yes, Reset Demo
+            {isSubmitting ? 'Resetting...' : 'Yes, Reset Demo'}
           </button>
         </div>
       </div>

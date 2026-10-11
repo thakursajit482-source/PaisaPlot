@@ -21,6 +21,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
   const [targetAmountStr, setTargetAmountStr] = useState('');
   const [targetDateStr, setTargetDateStr] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (goalToEdit) {
@@ -33,6 +34,7 @@ export const GoalModal: React.FC<GoalModalProps> = ({
       setTargetDateStr('');
     }
     setFormError(null);
+    setIsSubmitting(false);
   }, [goalToEdit, isOpen]);
 
   useEffect(() => {
@@ -68,12 +70,17 @@ export const GoalModal: React.FC<GoalModalProps> = ({
       return;
     }
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     let result;
     if (goalToEdit) {
       result = editGoal(goalToEdit.id, name, amountNum, targetDateStr || undefined);
     } else {
       result = addGoal(name, amountNum, targetDateStr || undefined);
     }
+
+    setIsSubmitting(false);
 
     if (result.success) {
       onClose();
@@ -198,10 +205,13 @@ export const GoalModal: React.FC<GoalModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-violet-light hover:bg-violet-300 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-violet-light hover:bg-violet-300 rounded-xl transition-all shadow-md flex items-center gap-1.5 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <Target className="w-4 h-4" />
-              {goalToEdit ? 'Save Changes' : 'Create Goal'}
+              {isSubmitting ? 'Saving...' : goalToEdit ? 'Save Changes' : 'Create Goal'}
             </button>
           </div>
         </form>

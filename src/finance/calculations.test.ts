@@ -1116,6 +1116,228 @@ describe('Phase 3 — Interconnected Financial Planning Engine', () => {
       expect(rentWarning!.day).toBeGreaterThan(0);
     });
   });
+
+  describe('Phase 5: Functional Regression, Reconciliation Integrity & Boundary Audit', () => {
+    it('guarantees bill payment reconciliation conserves spendable cash without double deduction', () => {
+      // Starting: balance 10,000, bill 2,200 unpaid => spendable 7,800
+      const bill: BillCommitment = {
+        id: 'b-rent-recon',
+        title: 'Monthly Rent',
+        amount: 2200,
+        dueDate: '2026-10-15',
+        category: 'Housing & Rent',
+        isPaid: false,
+      };
+
+      const initialState: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 2200,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [bill],
+        subscriptions: [],
+      };
+
+      const initialMetrics = calculateFinancialMetrics(initialState);
+      expect(initialMetrics.balance).toBe(10000);
+      expect(initialMetrics.spendableAfterCommitments).toBe(7800);
+
+      // STEP A: Pay the bill
+      const paidTx: Transaction = {
+        id: `tx-bill-paid-${bill.id}`,
+        title: `Bill Paid: ${bill.title}`,
+        category: bill.category || 'Bills & Utilities',
+        amount: bill.amount,
+        date: '2026-10-15T10:00:00.000Z',
+        type: 'expense',
+      };
+
+      const paidState: FinancialState = {
+        ...initialState,
+        bills: [{ ...bill, isPaid: true, paidAt: '2026-10-15T10:00:00.000Z' }],
+        transactions: [paidTx],
+        unpaidCommitments: 0,
+      };
+
+      const paidMetrics = calculateFinancialMetrics(paidState);
+      expect(paidMetrics.balance).toBe(7800); // 10000 - 2200
+      expect(paidMetrics.totalExpenses).toBe(2200);
+      expect(paidMetrics.spendableAfterCommitments).toBe(7800); // 7800 - 0 = 7800!
+      // Invariant: Spendable cash is CONSERVED before and after paying the bill!
+      expect(paidMetrics.spendableAfterCommitments).toBe(initialMetrics.spendableAfterCommitments);
+
+      // STEP B: Reopen the bill as unpaid
+      const reopenedState: FinancialState = {
+        ...initialState,
+        bills: [{ ...bill, isPaid: false }],
+        transactions: [], // transaction removed
+        unpaidCommitments: 2200,
+      };
+
+      const reopenedMetrics = calculateFinancialMetrics(reopenedState);
+      expect(reopenedMetrics.balance).toBe(10000);
+      expect(reopenedMetrics.totalExpenses).toBe(0);
+      expect(reopenedMetrics.spendableAfterCommitments).toBe(7800);
+      // Invariant: Reversing the bill restores the exact initial balance and spendable cash!
+      expect(reopenedMetrics.balance).toBe(initialMetrics.balance);
+    });
+
+    it('reallocates spendable cash to savings goals without mutating total balance or income', () => {
+      const goal: SavingsGoal = {
+        id: 'g-reserve',
+        name: 'Emergency Fund',
+        targetAmount: 2000,
+        alreadySaved: 0,
+      };
+
+      const stateBefore: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 3000,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [goal],
+        bills: [],
+        subscriptions: [],
+      };
+
+      const metricsBefore = calculateFinancialMetrics(stateBefore);
+      expect(metricsBefore.balance).toBe(10000);
+      expect(metricsBefore.totalIncome).toBe(0);
+      expect(metricsBefore.dailyAllowance).toBe(166.67);
+
+      // User allocates ₹500 from spendable cash into the goal
+      const stateAfter: FinancialState = {
+        ...stateBefore,
+        goals: [{ ...goal, alreadySaved: 500 }],
+        alreadySaved: 500,
+      };
+
+      const metricsAfter = calculateFinancialMetrics(stateAfter);
+      // Invariant: Total balance is NOT changed by goal reallocations
+      expect(metricsAfter.balance).toBe(10000);
+      expect(metricsAfter.totalIncome).toBe(0);
+      expect(metricsAfter.totalExpenses).toBe(0);
+
+      // Remaining target decreases by 500
+      expect(metricsAfter.remainingSavingsTarget).toBe(1500);
+      expect(metricsAfter.savingsProgressPercent).toBe(25);
+
+      // Daily allowance increases because less remaining target needs to be saved over the 30 days
+      // (7000 - 1500) / 30 = 5500 / 30 = 183.33
+      expect(metricsAfter.dailyAllowance).toBe(183.33);
+      expect(metricsAfter.dailyAllowance).toBeGreaterThan(metricsBefore.dailyAllowance);
+    });
+
+    it('safely handles zero and negative boundaries in financial functions', () => {
+      // calculateDailyAllowance handles zero or negative days remaining
+      expect(calculateDailyAllowance(5000, 2000, 0)).toBe(0);
+      expect(calculateDailyAllowance(5000, 2000, -5)).toBe(0);
+
+      // calculateDailyAllowance handles negative spendable funds
+      expect(calculateDailyAllowance(-1000, 2000, 30)).toBe(0);
+
+      // calculateRemainingSavingsTarget handles overfunded target safely
+      expect(calculateRemainingSavingsTarget(2000, 2500)).toBe(0);
+      expect(calculateRemainingSavingsTarget(0, 0)).toBe(0);
+
+      // calculateSavingsProgress caps at 100% and handles zero target
+      expect(calculateSavingsProgress(2500, 2000)).toBe(100);
+      expect(calculateSavingsProgress(500, 0)).toBe(100);
+      expect(calculateSavingsProgress(0, 0)).toBe(100);
+
+      // formatINR handles edge cases
+      expect(formatINR(NaN)).toBe('₹0');
+      expect(formatINR(Infinity)).toBe('₹0');
+      expect(formatINR(-0)).toBe('₹0');
+      expect(formatINR(-1500)).toBe('−₹1,500');
+      expect(formatINR(1500, { includeSign: true })).toBe('+₹1,500');
+    });
+
+    it('excludes paused subscriptions from forecast occurrences and future charges', () => {
+      const pausedSub: Subscription = {
+        id: 's-paused',
+        name: 'Gym Membership',
+        amount: 1200,
+        frequency: 'monthly',
+        nextBillingDate: '2026-10-18',
+        category: 'Health & Wellness',
+        active: false, // Paused
+      };
+
+      const refDate = new Date('2026-10-10');
+      const subResult = calculateSubscriptionOccurrencesInWindow(pausedSub, refDate, 30);
+      expect(subResult.occurrences).toBe(0);
+      expect(subResult.totalCost).toBe(0);
+
+      const stateWithPaused: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 0,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [],
+        subscriptions: [pausedSub],
+      };
+
+      const forecast = generateForecast(stateWithPaused, undefined, refDate);
+      expect(forecast.totalExpectedSubscriptions).toBe(0);
+      expect(forecast.totalExpectedFutureCharges).toBe(0);
+    });
+
+    it('guarantees pure simulation immutability and rejects unaffordable purchases safely', () => {
+      const baseState: FinancialState = {
+        startingBudget: 10000,
+        daysRemaining: 30,
+        unpaidCommitments: 3000,
+        savingsGoal: 2000,
+        alreadySaved: 0,
+        transactions: [],
+        goals: [],
+        bills: [],
+        subscriptions: [],
+      };
+
+      // 1. Simulation with eligible purchase
+      const sim = simulatePurchase(baseState, {
+        title: 'New Shoes',
+        category: 'Shopping & Tech',
+        amount: 1500,
+      });
+
+      // Simulation gives expected projections
+      expect(sim.isAffordable).toBe(true);
+      expect(sim.simulatedMetrics.balance).toBe(8500);
+
+      // Invariant: baseState is completely unmutated
+      expect(baseState.transactions).toHaveLength(0);
+      expect(baseState.startingBudget).toBe(10000);
+
+      // 2. Simulation exceeding total balance
+      const simExceeds = simulatePurchase(baseState, {
+        title: 'Motorbike',
+        category: 'Transport & Fuel',
+        amount: 15000,
+      });
+      expect(simExceeds.isAffordable).toBe(false);
+      expect(simExceeds.affordabilityStatus).toBe('exceeds_balance');
+
+      // 3. Simulation impairing commitments (balance 10,000, commitment 3,000, purchase 8,000 => balance 2,000 < 3,000)
+      const simImpairs = simulatePurchase(baseState, {
+        title: 'High-end Laptop',
+        category: 'Shopping & Tech',
+        amount: 8000,
+      });
+      expect(simImpairs.isAffordable).toBe(false);
+      expect(simImpairs.affordabilityStatus).toBe('impairs_commitments');
+    });
+  });
 });
 
 

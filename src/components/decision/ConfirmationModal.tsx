@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertTriangle, ShieldCheck, ArrowRight, Wallet, Calendar } from 'lucide-react';
 import { SimulationResult } from '../../types/finance';
 
@@ -15,6 +15,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   simulation,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -24,6 +32,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  const handleConfirm = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    onConfirm();
+    onClose();
+  };
 
   if (!isOpen || !simulation) return null;
 
@@ -171,14 +186,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="px-5 py-2.5 text-sm font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-2"
+            disabled={isSubmitting}
+            onClick={handleConfirm}
+            className={`px-5 py-2.5 text-sm font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-2 ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+            }`}
           >
             <CheckCircle2 className="w-4 h-4" />
-            Confirm & Record Expense
+            {isSubmitting ? 'Recording...' : 'Confirm & Record Expense'}
           </button>
         </div>
       </div>

@@ -21,6 +21,7 @@ export const BillModal: React.FC<BillModalProps> = ({
   const [dueDateStr, setDueDateStr] = useState('');
   const [category, setCategory] = useState<string>('Bills & Utilities');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (billToEdit) {
@@ -35,6 +36,7 @@ export const BillModal: React.FC<BillModalProps> = ({
       setCategory('Bills & Utilities');
     }
     setFormError(null);
+    setIsSubmitting(false);
   }, [billToEdit, isOpen]);
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export const BillModal: React.FC<BillModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!title.trim()) {
       setFormError('Please enter a bill title.');
@@ -68,17 +71,22 @@ export const BillModal: React.FC<BillModalProps> = ({
       return;
     }
 
-    let result;
-    if (billToEdit) {
-      result = editBill(billToEdit.id, title, amountNum, dueDateStr, category);
-    } else {
-      result = addBill(title, amountNum, dueDateStr, category);
-    }
+    setIsSubmitting(true);
+    try {
+      let result;
+      if (billToEdit) {
+        result = editBill(billToEdit.id, title, amountNum, dueDateStr, category);
+      } else {
+        result = addBill(title, amountNum, dueDateStr, category);
+      }
 
-    if (result.success) {
-      onClose();
-    } else if (result.error) {
-      setFormError(result.error);
+      if (result.success) {
+        onClose();
+      } else if (result.error) {
+        setFormError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -214,10 +222,11 @@ export const BillModal: React.FC<BillModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
             >
               <Shield className="w-4 h-4" />
-              {billToEdit ? 'Save Bill' : 'Lock Commitment'}
+              {isSubmitting ? 'Saving...' : billToEdit ? 'Save Bill' : 'Lock Commitment'}
             </button>
           </div>
         </form>

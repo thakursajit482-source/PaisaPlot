@@ -18,6 +18,12 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   message,
   confirmLabel = 'Delete',
 }) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  useEffect(() => {
+    setIsSubmitting(false);
+  }, [isOpen]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -29,6 +35,17 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      onConfirm();
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -74,14 +91,12 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="px-4 py-2 text-xs font-bold text-slate-100 bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-md flex items-center gap-1.5"
+            disabled={isSubmitting}
+            onClick={handleConfirm}
+            className="px-4 py-2 text-xs font-bold text-slate-100 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
-            {confirmLabel}
+            {isSubmitting ? 'Deleting...' : confirmLabel}
           </button>
         </div>
       </div>

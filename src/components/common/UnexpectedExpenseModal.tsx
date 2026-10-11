@@ -23,6 +23,7 @@ export const UnexpectedExpenseModal: React.FC<UnexpectedExpenseModalProps> = ({
   const [dateStr, setDateStr] = useState(todayStr);
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -44,11 +45,13 @@ export const UnexpectedExpenseModal: React.FC<UnexpectedExpenseModalProps> = ({
     setDateStr(todayStr);
     setNotes('');
     setFormError(null);
+    setIsSubmitting(false);
     onClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!title.trim()) {
       setFormError('Please enter an expense description or reason.');
@@ -68,7 +71,10 @@ export const UnexpectedExpenseModal: React.FC<UnexpectedExpenseModalProps> = ({
       return;
     }
 
+    setIsSubmitting(true);
     const result = recordUnexpectedExpense(title, category, amountNum, dateStr, notes);
+    setIsSubmitting(false);
+
     if (result.success) {
       handleClose();
     } else if (result.error) {
@@ -240,10 +246,13 @@ export const UnexpectedExpenseModal: React.FC<UnexpectedExpenseModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-slate-100 bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-5 py-2.5 text-xs font-bold text-slate-100 bg-rose-600 hover:bg-rose-500 rounded-xl transition-all shadow-md flex items-center gap-1.5 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <AlertTriangle className="w-4 h-4" />
-              Confirm Expense
+              {isSubmitting ? 'Recording...' : 'Confirm Expense'}
             </button>
           </div>
         </form>

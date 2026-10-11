@@ -19,6 +19,7 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose 
   const [dateStr, setDateStr] = useState(todayStr);
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Close modal on Escape key
   useEffect(() => {
@@ -40,11 +41,13 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose 
     setDateStr(todayStr);
     setNotes('');
     setFormError(null);
+    setIsSubmitting(false);
     onClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!title.trim()) {
       setFormError('Please provide an income source or title.');
@@ -67,7 +70,10 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose 
       return;
     }
 
+    setIsSubmitting(true);
     const result = addIncomeTransaction(title, category, amountNum, dateStr, notes);
+    setIsSubmitting(false);
+
     if (result.success) {
       handleClose();
     } else if (result.error) {
@@ -235,10 +241,13 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose 
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-5 py-2.5 text-xs font-bold text-navy-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition-all shadow-md flex items-center gap-1.5 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <PlusCircle className="w-4 h-4" />
-              Confirm Inflow
+              {isSubmitting ? 'Recording...' : 'Confirm Inflow'}
             </button>
           </div>
         </form>

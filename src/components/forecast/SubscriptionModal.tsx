@@ -23,6 +23,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   const [category, setCategory] = useState<string>('Entertainment');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (subscriptionToEdit) {
@@ -41,6 +42,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
       setNotes('');
     }
     setFormError(null);
+    setIsSubmitting(false);
   }, [subscriptionToEdit, isOpen]);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!name.trim()) {
       setFormError('Please enter a subscription name.');
@@ -74,25 +77,30 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
       return;
     }
 
-    let result;
-    if (subscriptionToEdit) {
-      result = editSubscription(
-        subscriptionToEdit.id,
-        name,
-        amountNum,
-        frequency,
-        nextBillingDateStr,
-        category,
-        notes
-      );
-    } else {
-      result = addSubscription(name, amountNum, frequency, nextBillingDateStr, category, notes);
-    }
+    setIsSubmitting(true);
+    try {
+      let result;
+      if (subscriptionToEdit) {
+        result = editSubscription(
+          subscriptionToEdit.id,
+          name,
+          amountNum,
+          frequency,
+          nextBillingDateStr,
+          category,
+          notes
+        );
+      } else {
+        result = addSubscription(name, amountNum, frequency, nextBillingDateStr, category, notes);
+      }
 
-    if (result.success) {
-      onClose();
-    } else if (result.error) {
-      setFormError(result.error);
+      if (result.success) {
+        onClose();
+      } else if (result.error) {
+        setFormError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -259,10 +267,11 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
-              {subscriptionToEdit ? 'Save Changes' : 'Add Subscription'}
+              {isSubmitting ? 'Saving...' : subscriptionToEdit ? 'Save Changes' : 'Add Subscription'}
             </button>
           </div>
         </form>

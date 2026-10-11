@@ -1,12 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { FinanceProvider } from './context/FinanceContext';
 import { Navbar, NavTab } from './components/layout/Navbar';
 import { OverviewView } from './components/overview/OverviewView';
-import { DecisionLab } from './components/decision/DecisionLab';
-import { TransactionsView } from './components/transactions/TransactionsView';
-import { GoalsView } from './components/goals/GoalsView';
-import { ForecastView } from './components/forecast/ForecastView';
 import { Compass, ShieldCheck } from 'lucide-react';
+
+// Lazy-loaded secondary views for code splitting and optimal bundle pacing
+const DecisionLab = lazy(() =>
+  import('./components/decision/DecisionLab').then((m) => ({ default: m.DecisionLab }))
+);
+const TransactionsView = lazy(() =>
+  import('./components/transactions/TransactionsView').then((m) => ({ default: m.TransactionsView }))
+);
+const GoalsView = lazy(() =>
+  import('./components/goals/GoalsView').then((m) => ({ default: m.GoalsView }))
+);
+const ForecastView = lazy(() =>
+  import('./components/forecast/ForecastView').then((m) => ({ default: m.ForecastView }))
+);
+
+const ViewLoadingFallback: React.FC = () => (
+  <div
+    className="w-full py-20 flex flex-col items-center justify-center space-y-4 animate-fade-in"
+    role="status"
+    aria-live="polite"
+    aria-label="Loading view"
+  >
+    <div className="w-12 h-12 rounded-2xl bg-navy-900 border border-navy-750 flex items-center justify-center shadow-card-dark">
+      <Compass className="w-6 h-6 text-brand-lime animate-spin" />
+    </div>
+    <div className="space-y-2 text-center">
+      <p className="text-sm font-semibold text-slate-300">Loading Module...</p>
+      <p className="text-xs text-slate-500">Preparing deterministic financial simulator</p>
+    </div>
+  </div>
+);
 
 const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
@@ -18,24 +45,26 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'overview' && (
-          <OverviewView
-            onNavigateToDecisionLab={() => setActiveTab('decision-lab')}
-            onNavigateToTransactions={() => setActiveTab('transactions')}
-            onNavigateToGoals={() => setActiveTab('goals')}
-            onNavigateToForecast={() => setActiveTab('forecast')}
-          />
-        )}
-        {activeTab === 'decision-lab' && <DecisionLab />}
-        {activeTab === 'transactions' && (
-          <TransactionsView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
-        )}
-        {activeTab === 'goals' && (
-          <GoalsView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
-        )}
-        {activeTab === 'forecast' && (
-          <ForecastView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
-        )}
+        <Suspense fallback={<ViewLoadingFallback />}>
+          {activeTab === 'overview' && (
+            <OverviewView
+              onNavigateToDecisionLab={() => setActiveTab('decision-lab')}
+              onNavigateToTransactions={() => setActiveTab('transactions')}
+              onNavigateToGoals={() => setActiveTab('goals')}
+              onNavigateToForecast={() => setActiveTab('forecast')}
+            />
+          )}
+          {activeTab === 'decision-lab' && <DecisionLab />}
+          {activeTab === 'transactions' && (
+            <TransactionsView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
+          )}
+          {activeTab === 'goals' && (
+            <GoalsView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
+          )}
+          {activeTab === 'forecast' && (
+            <ForecastView onNavigateToDecisionLab={() => setActiveTab('decision-lab')} />
+          )}
+        </Suspense>
       </main>
 
       {/* Clean Footer */}

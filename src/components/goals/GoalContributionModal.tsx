@@ -19,10 +19,12 @@ export const GoalContributionModal: React.FC<GoalContributionModalProps> = ({
 
   const [amountStr, setAmountStr] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setAmountStr('');
     setFormError(null);
+    setIsSubmitting(false);
   }, [goal, isOpen]);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export const GoalContributionModal: React.FC<GoalContributionModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     const amountNum = parseFloat(amountStr);
     if (isNaN(amountNum) || !isFinite(amountNum) || amountNum <= 0) {
@@ -69,11 +72,16 @@ export const GoalContributionModal: React.FC<GoalContributionModalProps> = ({
       return;
     }
 
-    const result = contributeToGoal(goal.id, amountNum);
-    if (result.success) {
-      onClose();
-    } else if (result.error) {
-      setFormError(result.error);
+    setIsSubmitting(true);
+    try {
+      const result = contributeToGoal(goal.id, amountNum);
+      if (result.success) {
+        onClose();
+      } else if (result.error) {
+        setFormError(result.error);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,10 +211,11 @@ export const GoalContributionModal: React.FC<GoalContributionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-xs font-bold text-navy-950 bg-brand-lime hover:bg-brand-lime-dim disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-glow-lime flex items-center gap-1.5 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
-              Allocate to Goal
+              {isSubmitting ? 'Allocating...' : 'Allocate to Goal'}
             </button>
           </div>
         </form>
